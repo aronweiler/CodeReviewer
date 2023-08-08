@@ -1,0 +1,15 @@
+# action.yml
+name: 'Code Reviewer'
+description: 'Review the code in a pull request'
+inputs:
+  pr-to-review:  # id of pr to review
+    description: 'PR to review'
+    required: true
+outputs:
+  summary: # summary of the code review results
+    description: 'Summary of the code review results'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.pr-to-review }}
