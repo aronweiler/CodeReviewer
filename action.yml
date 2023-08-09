@@ -6,4 +6,4 @@ outputs:
     description: 'Summary of the code review results'
 runs:
   using: 'docker'
-  image: aronweiler/github-actions:latest
+  image: docker://aronweiler/github-actions:latest
