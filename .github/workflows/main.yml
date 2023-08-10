@@ -1,0 +1,33 @@
+name: Code Refactor
+
+on:
+  workflow_dispatch:  # Triggered manually through the GitHub UI
+
+jobs:
+  code_review:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+        
+      - name: Input variables
+        id: input_vars
+        run: |
+          echo "type=${{ github.event.inputs.type }}"
+          echo "commit=${{ github.event.inputs.commit }}"
+          echo "target=${{ github.event.inputs.target }}"
+        shell: bash
+        
+      - name: Start code review step
+        id: code_review
+        uses: aronweiler/codereviewer@main
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        with:
+          type: ${{ steps.input_vars.outputs.type }}
+          commit: ${{ steps.input_vars.outputs.commit }}
+          target: ${{ steps.input_vars.outputs.target }}
