@@ -9,10 +9,10 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
-from integrations.commenter_base import CommenterBase, CodeComment
+from integrations.source_control_base import SourceControlBase, CodeComment
 
 
-class GitHubCommenter(CommenterBase):
+class GitHubIntegration(SourceControlBase):
     def __init__(self):
         # using an access token
         # Get the GITHUB_TOKEN from the environment
@@ -22,11 +22,12 @@ class GitHubCommenter(CommenterBase):
         # Public Web Github
         self.github = Github(auth=self.auth)
 
-        # Example of using an access token with a GitHub Enterprise Base URL
-        # Github Enterprise with custom hostname
-        # g = Github(base_url="https://{hostname}/api/v3", auth=auth)
+    def create_refactor_branch(self, source_branch: str, target_branch: str, files):        
+        pass
 
-    def add_comments(self, comments: List[CodeComment]):
+
+
+    def add_pr_comments(self, comments: List[CodeComment]):
         github_output = os.environ.get("GITHUB_OUTPUT", None)
         logging.debug("GH Output: " + github_output)
 

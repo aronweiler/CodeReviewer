@@ -17,16 +17,16 @@ from datetime import datetime
 from typing import Union, List, Dict
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
-from review_configuration import ReviewConfiguration
-from prompts import REVIEW_PROMPT, REVIEW_TEMPLATE, SUMMARIZE_PROMPT, SUMMARIZE_TEMPLATE
-from token_helper import simple_get_tokens_for_message
-from integrations.commenter_base import CodeComment
+from code_reviewer_configuration import CodeReviewerConfiguration
+from review.prompts import REVIEW_PROMPT, REVIEW_TEMPLATE, SUMMARIZE_PROMPT, SUMMARIZE_TEMPLATE
+from utilities.token_helper import simple_get_tokens_for_message
+from review.code_comment import CodeComment
 
+# TODO: Expand this list- most of the stuff we have doesn't need to be split, anyway.
 SUPPORTED_FILE_TYPES = {"py": Language.PYTHON, "cpp": Language.CPP}
 
-
 class CodeReviewer:
-    def __init__(self, configuration: ReviewConfiguration):
+    def __init__(self, configuration: CodeReviewerConfiguration):
         self.configuration = configuration
         self.llm_arguments_configuration = configuration.llm_arguments
 
@@ -200,7 +200,7 @@ class CodeReviewer:
 
 # Testing
 if __name__ == "__main__":
-    configuration = ReviewConfiguration.from_environment()
+    configuration = CodeReviewerConfiguration.from_environment()
     cr = CodeReviewer(configuration)
     test_json = """{
     "comments": [

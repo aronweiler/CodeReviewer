@@ -13,13 +13,21 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+
+      - name: Get branch list
+        id: branch_list
+        run: |
+          branches=$(git branch -r --format='%(refname:short)' | grep -v HEAD)
+          branch_array=($branches)
+          echo "::set-output name=branches::${branch_array[@]}"
+        shell: bash
         
       - name: Input variables
         id: input_vars
         run: |
           echo "type=${{ github.event.inputs.type }}"
-          echo "commit=${{ github.event.inputs.commit }}"
-          echo "target=${{ github.event.inputs.target }}"
+          echo "source_branch=${{ github.event.inputs.source_branch }}"
+          echo "target_branch=${{ github.event.inputs.target_branch }}"
         shell: bash
         
       - name: Start code review step
@@ -29,5 +37,5 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
           type: ${{ steps.input_vars.outputs.type }}
-          commit: ${{ steps.input_vars.outputs.commit }}
-          target: ${{ steps.input_vars.outputs.target }}
+          source_branch: ${{ steps.input_vars.outputs.source_branch }}
+          target_branch: ${{ steps.input_vars.outputs.target_branch }}
