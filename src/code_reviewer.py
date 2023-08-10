@@ -86,7 +86,8 @@ class CodeReviewer:
             documents["metadatas"][i]["review"] = chunk_review
 
             # Load the chunk_review into json
-            comments.append(self.get_comments(chunk_review['text'], documents["metadatas"][i]["file_name"]))
+            for comment in self.get_comments(chunk_review['text'], documents["metadatas"][i]["file_name"]):
+                comments.append(comment)
 
         return comments
 

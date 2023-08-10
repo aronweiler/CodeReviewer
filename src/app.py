@@ -1,24 +1,21 @@
 import os
 import logging
-import sys
 import argparse
 
-from integrations.github_commenter import GitHubCommenter
 from code_reviewer import CodeReviewer
 from review_configuration import ReviewConfiguration
-
-PROVIDERS = {"github": GitHubCommenter(), "gitlab": None, "bitbucket": None}
+from review_configuration import PROVIDERS
 
 
 class ReviewRunner:
     def __init__(self):
         self.parse_arguments()
-        #self.set_logging_level()
+        # self.set_logging_level()
 
     def parse_arguments(self):
         # Add arguments
         parser = argparse.ArgumentParser()
-        
+
         parser.add_argument("file_paths", nargs="+", help="List of file paths.")
 
         self.args = parser.parse_args()
@@ -50,10 +47,9 @@ class ReviewRunner:
         code_comments = self.do_review(source_code_files, configuration)
 
         # Have the provider-specific code add the review to the PR
-        PROVIDERS[configuration.provider].add_comments(code_comments)
+        PROVIDERS[configuration.provider.lower()].add_comments(code_comments)
 
-
-    def do_review(self, source_code_files, configuration: ReviewConfiguration):        
+    def do_review(self, source_code_files, configuration: ReviewConfiguration):
         code_reviewer = CodeReviewer(configuration)
         review = code_reviewer.review(source_code_files)
         return review
