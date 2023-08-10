@@ -3,3 +3,5 @@ openai
 python-dotenv
 chromadb
 tiktoken
+argparse
+PyGithub
