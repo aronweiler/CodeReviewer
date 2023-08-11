@@ -18,11 +18,20 @@ from typing import Union, List, Dict
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from code_reviewer_configuration import CodeReviewerConfiguration
-from refactor.prompts import REFACTOR_PROMPT, REFACTOR_TEMPLATE, SUMMARIZE_PROMPT, SUMMARIZE_TEMPLATE
+from refactor.prompts import (
+    REFACTOR_PROMPT,
+    REFACTOR_TEMPLATE,
+    SUMMARIZE_PROMPT,
+    SUMMARIZE_TEMPLATE,
+)
 from utilities.token_helper import simple_get_tokens_for_message
 from utilities.open_ai import get_openai_api_key
 
-SUPPORTED_FILE_TYPES = {"py": Language.PYTHON, "cpp": Language.CPP} #, "md": Language.MARKDOWN} # Re-add this when I ingest documentation with the refactor
+SUPPORTED_FILE_TYPES = {
+    "py": Language.PYTHON,
+    "cpp": Language.CPP,
+}  # , "md": Language.MARKDOWN} # Re-add this when I ingest documentation with the refactor
+
 
 class CodeRefactor:
     def __init__(self, configuration: CodeReviewerConfiguration):
@@ -46,9 +55,7 @@ class CodeRefactor:
         self.summarize_chain = LLMChain(llm=self.llm, prompt=SUMMARIZE_PROMPT)
 
     def refactor(self, target_files: List[str]):
-        vector_db = self.add_to_datastore(
-            target_files, self.remaining_prompt_tokens
-        )
+        vector_db = self.add_to_datastore(target_files, self.remaining_prompt_tokens)
 
         documents = vector_db.get()
         num_documents = len(documents["documents"])
@@ -56,7 +63,7 @@ class CodeRefactor:
         logging.info(f"Created vector database with {num_documents} chunks of code")
 
         # TODO: Add this step in later
-        # First summarize the code's functionality        
+        # First summarize the code's functionality
         # for i in range(0, num_documents):
         #     logging.info(
         #         f"Refactoring {documents['metadatas'][i]['file_name']}"
@@ -70,21 +77,21 @@ class CodeRefactor:
         #         )
         #         documents["metadatas"][i]["summary"] = chunk_summary
 
-        
         # Refactor the code
         for i in range(0, num_documents):
-            logging.info(
-                f"Refactoring {documents['metadatas'][i]['file_name']}"
-            )
+            logging.info(f"Refactoring {documents['metadatas'][i]['file_name']}")
             code_to_refactor = documents["documents"][i]
 
-            documents['metadatas'][i]['refactored_code'] = self.refactor_chain(inputs={"code": code_to_refactor})['text']
+            documents["metadatas"][i]["refactored_code"] = self.refactor_chain(
+                inputs={
+                    "code": code_to_refactor,
+                    "language": documents["metadatas"][i]["language"],
+                }
+            )["text"]
 
         return documents
 
-    def add_to_datastore(
-        self, target_files: List[str], max_split_size: int
-    ) -> Chroma:
+    def add_to_datastore(self, target_files: List[str], max_split_size: int) -> Chroma:
         # Split the file into chunks of (max_tokens - max_completion_tokens)
         # This is because the LLM will need to add the completion tokens to the end of the chunk
         documents = []
@@ -102,7 +109,7 @@ class CodeRefactor:
                 continue
 
             language = SUPPORTED_FILE_TYPES[file_extension]
-            logging.debug(f"Language is {language} for {file}")
+            logging.info(f"Language is {language} for {file}")
 
             # Read the file in
             with open(file, "r") as f:
@@ -124,10 +131,8 @@ class CodeRefactor:
             joined_docs = code_splitter.create_documents([file_contents])
 
             for d in [d for d in joined_docs]:
-                d.metadata = {
-                    "file_name": file
-                }
+                d.metadata = {"file_name": file, "language": language}
 
-                documents.append(d)            
+                documents.append(d)
 
         return Chroma.from_documents(documents, OpenAIEmbeddings())

@@ -1,6 +1,6 @@
 from langchain.prompts import PromptTemplate
 
-REFACTOR_TEMPLATE = """You are a world-renowned expert in all programming languages and practices. You have been tasked with identifying security vulnerabilities, performance bottlenecks, memory management concerns, best practices, and code correctness problems with the following code.
+REFACTOR_TEMPLATE = """You are a world-renowned expert in the {language} programming language and best practices. You have been tasked with identifying security vulnerabilities, performance bottlenecks, memory management concerns, best practices, and code correctness problems with the following code.
 
 The code below is a part of a larger code base.
 
@@ -8,17 +8,17 @@ The code below is a part of a larger code base.
 {code}
 ----- END CODE -----
 
-Please refactor this code keeping in mind your goal to fix any of the issues found above, such as security vulnerabilities, performance bottlenecks, memory management concerns, best practices, and code correctness problems.  
+Please refactor this {language} code keeping in mind your goal to fix any of the issues found above, such as security vulnerabilities, performance bottlenecks, memory management concerns, best practices, and code correctness problems. In addition, please add explanatory comments where code might be hard to understand.
 
-In addition, please try to make the code more readable and maintainable (such as by reorganizing, removing unused code, adding comments, correcting grammar, etc.).
+Also, please try to make the code more readable and maintainable (such as by reorganizing code, removing unused code, adding or rephrasing comments, correcting grammar, etc.).  Existing code comments should not be removed, only rephrased for accuracy.
 
-Return ONLY the newly refactored code, and nothing else.  Your refactored code will overwrite the existing code.
+Return only the newly refactored and commented code, and nothing else.  Do not return markdown, or ```{language} (code)```.  Do not summarize your changes, only refactor the code.  
 
-Refactored Code:
+Refactored {language} CODE ONLY:
 """
 
 REFACTOR_PROMPT = PromptTemplate(
-    input_variables=["code"],
+    input_variables=["code", "language"],
     template=REFACTOR_TEMPLATE,
 )
 
