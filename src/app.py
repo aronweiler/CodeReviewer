@@ -7,6 +7,7 @@ from review.code_reviewer import CodeReviewer
 from code_reviewer_configuration import CodeReviewerConfiguration
 from code_reviewer_configuration import PROVIDERS
 
+VALID_TYPES = ["review", "refactor", "document"]
 
 class ReviewRunner:
     def __init__(self):
@@ -16,10 +17,12 @@ class ReviewRunner:
         self.configuration = CodeReviewerConfiguration.from_environment()
 
     def main(self):
-        if self.args.type == "review":
+        if self.args.type.lower() == "review":
             self.do_code_review()
-        elif self.args.type == "refactor":
+        elif self.args.type.lower() == "refactor":
             self.do_code_refactor()     
+        elif self.args.type.lower() == "document":
+            self.do_code_summarization()     
         
     def do_code_refactor(self):
         # Run the refactor
@@ -34,6 +37,10 @@ class ReviewRunner:
         # Have the provider-specific code create the refactor branch with the results
         provider = PROVIDERS[self.configuration.provider.lower()]
         provider.create_refactor_branch(source_branch, target_branch, refactored_code)
+
+    def do_code_documentation(self):                
+        # TBD
+        pass
 
     def do_code_review(self):
         # Run the code review
@@ -74,8 +81,8 @@ class ReviewRunner:
 
         parser.add_argument(
             "--type",
-            default="review",
-            help="Type of run. Default: review",
+            required=True,
+            help=f"Type of run. Choices are: {str(VALID_TYPES)}",
         )
 
         parser.add_argument(
@@ -93,6 +100,12 @@ class ReviewRunner:
         parser.add_argument("file_paths", nargs="+", help="List of file paths.")
 
         self.args = parser.parse_args()
+
+        # Validate that self.args.type is one of the valid choices        
+        if self.args.type.lower() not in VALID_TYPES:
+            raise ValueError(
+                f"Invalid type: {self.args.type}. Valid types are: {VALID_TYPES}"
+            )
 
     def set_logging_level(self):
         # Set the logging level
