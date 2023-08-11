@@ -67,7 +67,7 @@ class CodeRefactor:
         # First summarize the code's functionality
         # for i in range(0, num_documents):
         #     logging.info(
-        #         f"Refactoring {documents['metadatas'][i]['file_name']}"
+        #         f"Refactoring {documents['metadatas'][i]['file_path']}"
         #     )
         #     code_to_refactor = documents["documents"][i]
 
@@ -80,7 +80,7 @@ class CodeRefactor:
 
         # Refactor the code
         for i in range(num_documents):
-            logging.info(f"Refactoring {documents['metadatas'][i]['file_name']}")
+            logging.info(f"Refactoring {documents['metadatas'][i]['file_path']}")
             code_to_refactor = documents["documents"][i]
 
             documents["metadatas"][i]["refactored_code"] = self.refactor_chain(
@@ -128,7 +128,7 @@ class CodeRefactor:
             joined_docs = code_splitter.create_documents([file_contents])
 
             for d in joined_docs:
-                d.metadata = {"file_name": file, "language": language}
+                d.metadata = {"file_path": file, "language": language}
                 documents.append(d)
 
         return Chroma.from_documents(documents, OpenAIEmbeddings())

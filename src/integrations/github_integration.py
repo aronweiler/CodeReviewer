@@ -1,10 +1,15 @@
-
 import logging
 import os
+import sys
 from typing import List
-from github import Github, Auth
+from github import Github, Auth, InputGitTreeElement
+
+# Append the parent directory to the system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
 from integrations.source_control_base import SourceControlBase, CodeComment
+
+REGULAR_FILE = "100644"
 
 
 class GitHubIntegration(SourceControlBase):
@@ -18,49 +23,70 @@ class GitHubIntegration(SourceControlBase):
         self.auth = Auth.Token(self.github_token)
         self.github = Github(auth=self.auth)
 
-    def commit_changes(self, branch_name, commit_message, code_documents):
+    def commit_changes(
+        self, source_branch, target_branch, commit_message, metadatas: List[dict]
+    ):
         repository = os.getenv("GITHUB_REPOSITORY")
         if not repository:
             raise ValueError("GITHUB_REPOSITORY is not set in the environment")
 
         repo = self.github.get_repo(repository)
-        branch = repo.get_branch(branch_name)
 
-        # Get the latest commit of the branch
-        latest_commit = repo.get_commit(branch.commit.sha)
+        # This call ensures the branch is created
+        commit_branch = self._create_branch(repository, source_branch, target_branch)
+
+        # Get the base tree
+        base_tree = repo.get_git_tree(sha=source_branch)
 
         # Create a new tree with the changes
-        new_tree = []
-        for doc in code_documents:
-            code = doc['metadatas']['refactored_code']
-            blob = repo.create_git_blob(code, 'base64')
-            new_tree.append(repo.create_git_tree(doc['metadatas']['file_path'], blob.sha, '100644'))
+        tree_elements = []
+        for doc in metadatas:
+            path = doc["file_path"]
+            code = doc["refactored_code"]
+            # Does the encoding need to match the source?  Probably should find out and adjust this if necessary.
+            blob = repo.create_git_blob(content=code, encoding="utf-8")
+            git_tree_element = InputGitTreeElement(
+                path=path, mode=REGULAR_FILE, type="blob", sha=blob.sha
+            )
+            tree_elements.append(git_tree_element)
 
-        new_tree_sha = repo.create_git_tree(new_tree).sha
+        new_tree = repo.create_git_tree(tree_elements, base_tree)
 
-        # Create a new commit
-        new_commit = repo.create_git_commit(commit_message, new_tree_sha, [latest_commit.sha])
+        # Create the commit
+        new_commit = repo.create_git_commit(
+            message=commit_message,
+            tree=repo.get_git_tree(sha=new_tree.sha),
+            parents=[repo.get_git_commit(repo.get_branch(source_branch).commit.sha)],
+        )
 
-        # Update the branch reference to point to the new commit
-        branch.edit(commit=new_commit.sha)
+        # Push the commit to the new branch by editing the reference
+        # branch_ref = repo.get_git_ref(ref=f"heads/{target_branch}")
+        print(f"{target_branch}_ref: {commit_branch}")
+
+        # Give it a good shove
+        commit_branch.edit(sha=new_commit.sha, force=True)
 
         logging.info("Changes committed and pushed successfully!")
 
-    def create_branch(self, source_branch, target_branch):
-        repository = os.getenv("GITHUB_REPOSITORY")
-        if not repository:
-            raise ValueError("GITHUB_REPOSITORY is not set in the environment")
-
+    def _create_branch(self, repository, source_branch, target_branch):
         repo = self.github.get_repo(repository)
 
         # Get the latest commit of the source branch
         source_ref = repo.get_git_ref(f"heads/{source_branch}")
         commit_sha = source_ref.object.sha
 
-        # Create the new branch with the specified commit
-        repo.create_git_ref(f"refs/heads/{target_branch}", commit_sha)
+        # See if the target branch already exists
+        try:
+            branch = repo.get_git_ref(f"heads/{target_branch}")
+            logging.info(f"Branch '{target_branch}' already exists!")
+            return branch
+        except:
+            pass
 
+        # Create the new branch with the specified commit
+        new_branch = repo.create_git_ref(f"refs/heads/{target_branch}", commit_sha)
         logging.info(f"New branch '{target_branch}' created successfully!")
+        return new_branch
 
     def add_pr_comments(self, comments: List[CodeComment]):
         github_output = os.getenv("GITHUB_OUTPUT", None)
@@ -70,7 +96,9 @@ class GitHubIntegration(SourceControlBase):
         github_pr = os.getenv("GITHUB_PR")
 
         if not github_repo or not github_pr:
-            raise ValueError("GITHUB_REPOSITORY or GITHUB_PR is not set in the environment")
+            raise ValueError(
+                "GITHUB_REPOSITORY or GITHUB_PR is not set in the environment"
+            )
 
         pr = self.github.get_repo(github_repo).get_pull(int(github_pr))
 
@@ -78,7 +106,7 @@ class GitHubIntegration(SourceControlBase):
             # Create a comment on a pull request
             # https://docs.github.com/en/rest/reference/pulls#create-a-review-for-a-pull-request
 
-            pr.create_review(                
+            pr.create_review(
                 body=comment.comment_in_markdown,
                 event="COMMENT",
                 comments=[
@@ -87,7 +115,7 @@ class GitHubIntegration(SourceControlBase):
                         "start_line": comment.starting_line_number,
                         "line": comment.ending_line_number,
                         "body": comment.comment_in_markdown,
-                        "side": "RIGHT"
+                        "side": "RIGHT",
                     }
                 ],
             )
@@ -102,14 +130,27 @@ class GitHubIntegration(SourceControlBase):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    commenter = GitHubIntegration()
-    commenter.add_pr_comments(
-        [
-            CodeComment(
-                starting_line_number=1,
-                ending_line_number=1,
-                comment_in_markdown="This is a test comment",
-                file_path="src/llms/memory/postgres_entity_store.py",
-            )
-        ]
+    github_integration = GitHubIntegration()
+
+    github_integration.commit_changes(
+        source_branch="main",
+        target_branch="test-branch",
+        commit_message="Test commit",
+        code_documents=[
+            {
+                "file_path": "examples/code_comment.py",
+                "refactored_code": "def test():\n    print('hello world')\n",
+            }
+        ],
     )
+
+    # commenter.add_pr_comments(
+    #     [
+    #         CodeComment(
+    #             starting_line_number=1,
+    #             ending_line_number=1,
+    #             comment_in_markdown="This is a test comment",
+    #             file_path="src/llms/memory/postgres_entity_store.py",
+    #         )
+    #     ]
+    # )

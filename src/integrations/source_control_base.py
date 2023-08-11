@@ -8,11 +8,8 @@ class SourceControlBase(ABC):
         pass
 
     @abstractmethod
-    def commit_changes(self, branch_name, commit_message, code_documents):
+    def commit_changes(self, source_branch, target_branch, commit_message, metadatas: List[dict]):
         pass
 
-    @abstractmethod
-    def create_branch(self, source_branch, target_branch):
-        pass
 
     
