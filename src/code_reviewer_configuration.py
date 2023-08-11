@@ -1,3 +1,4 @@
+
 import os
 import logging
 import json
@@ -6,12 +7,14 @@ from integrations.github_integration import GitHubIntegration
 from integrations.file_integration import FileIntegration
 from integrations.source_control_base import SourceControlBase
 
-PROVIDERS:Union[Dict[str,SourceControlBase], None] = {
+# Define the providers dictionary globally
+PROVIDERS: Union[Dict[str, SourceControlBase], None] = {
     "github": GitHubIntegration(),
     "gitlab": None,
     "bitbucket": None,
     "file": FileIntegration(),
 }
+
 
 class CodeReviewerConfiguration:
     def __init__(self, provider, include_summary, llm_arguments) -> None:
@@ -25,7 +28,7 @@ class CodeReviewerConfiguration:
             with open(file_path, "r") as f:
                 config = json.load(f)
         except FileNotFoundError:
-            logging.warn(
+            logging.warning(
                 f"Could not find configuration file at {file_path}, defaults will be used."
             )
             return CodeReviewerConfiguration.from_dict({})
@@ -50,7 +53,7 @@ class CodeReviewerConfiguration:
     @staticmethod
     def from_dict(config: dict):
         provider = config.get("provider", None)
-        if provider.lower() not in PROVIDERS:
+        if provider and provider.lower() not in PROVIDERS:
             logging.error(f"Provider {provider} is not supported.")
             raise ValueError(f"Provider {provider} is not supported.")
 
@@ -58,7 +61,7 @@ class CodeReviewerConfiguration:
 
         llm_node = config.get("llm", None)
         if llm_node is None:
-            logging.warn("No LLM configuration found, using defaults.")
+            logging.warning("No LLM configuration found, using defaults.")
             llm_node = {}
 
         llm_arguments = LLMArguments.from_dict(llm_node)
@@ -77,8 +80,6 @@ class LLMArguments:
 
     @staticmethod
     def from_json_file(file_path: str):
-        import json
-
         with open(file_path, "r") as f:
             config = json.load(f)
 
@@ -101,10 +102,11 @@ class LLMArguments:
             config = {}  # Use defaults
 
         model = config.get("model", "gpt-3.5-turbo-0613")
-        temperature = config.get("temperature", "0")
-        max_supported_tokens = config.get("max_supported_tokens", 4096)
-        max_completion_tokens = config.get("max_completion_tokens", 2048)
+        temperature = float(config.get("temperature", "0"))
+        max_supported_tokens = int(config.get("max_supported_tokens", 4096))
+        max_completion_tokens = int(config.get("max_completion_tokens", 2048))
 
         return LLMArguments(
             model, temperature, max_supported_tokens, max_completion_tokens
         )
+
