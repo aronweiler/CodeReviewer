@@ -8,5 +8,11 @@ class SourceControlBase(ABC):
         pass
 
     @abstractmethod
-    def create_refactor_branch(self, source_branch: str, target_branch: str, files):
+    def commit_changes(self, branch_name, commit_message, code_documents):
         pass
+
+    @abstractmethod
+    def create_branch(self, source_branch, target_branch):
+        pass
+
+    

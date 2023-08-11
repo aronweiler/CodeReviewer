@@ -4,6 +4,7 @@ import argparse
 from typing import List
 
 from review.code_reviewer import CodeReviewer
+from refactor.code_refactor import CodeRefactor
 from code_reviewer_configuration import CodeReviewerConfiguration
 from code_reviewer_configuration import PROVIDERS
 
@@ -31,12 +32,13 @@ class ReviewRunner:
         source_branch = self.args.source_branch
         target_branch = self.args.target_branch        
 
-        code_refactor = CodeRefactor(self.configuration, source_branch, target_branch)
-        refactored_code = code_refactor.refactor(source_code_files)
+        code_refactor = CodeRefactor(self.configuration)
+        refactored_code_documents = code_refactor.refactor(source_code_files)
         
         # Have the provider-specific code create the refactor branch with the results
         provider = PROVIDERS[self.configuration.provider.lower()]
-        provider.create_refactor_branch(source_branch, target_branch, refactored_code)
+        provider.create_branch(source_branch, target_branch)
+        provider.commit_changes(target_branch, "Auto-Refactor", refactored_code_documents)
 
     def do_code_documentation(self):                
         # TBD

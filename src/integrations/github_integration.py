@@ -1,8 +1,7 @@
 import logging
 import os
 from typing import List
-from github import Github
-from github import Auth
+from github import Github, Auth
 
 import sys
 import os
@@ -22,10 +21,45 @@ class GitHubIntegration(SourceControlBase):
         # Public Web Github
         self.github = Github(auth=self.auth)
 
-    def create_refactor_branch(self, source_branch: str, target_branch: str, files):        
-        pass
+    def commit_changes(self, branch_name, commit_message, code_documents):
+        repository = os.environ.get("GITHUB_REPOSITORY")
+        repo = self.github.get_repo(repository)
+        branch = repo.get_branch(branch_name)
+        
+        # Get the latest commit of the branch
+        latest_commit = repo.get_commit(branch.commit.sha)
+        
+        # Create a new tree with the changes
+        new_tree = []
+        for doc in code_documents:
+            code = doc['metadatas']['refactored_code']                
+            blob = repo.create_git_blob(code, 'base64')
+            # What??
+            #new_tree.append(repo.create_git_tree(doc['metadatas']['file_path'], blob.sha, '100644'))
+
+        new_tree_sha = repo.create_git_tree(new_tree).sha
+        
+        # Create a new commit
+        new_commit = repo.create_git_commit(commit_message, new_tree_sha, [latest_commit.sha])
+        
+        # Update the branch reference to point to the new commit
+        branch.edit(commit=new_commit.sha)
+
+        logging.info("Changes committed and pushed successfully!")
 
 
+    def create_branch(self, source_branch, target_branch):
+        repository = os.environ.get("GITHUB_REPOSITORY")
+        repo = self.github.get_repo(repository)
+
+        # Get the latest commit of the source branch
+        source_ref = repo.get_git_ref(f"heads/{source_branch}")
+        commit_sha = source_ref.object.sha
+
+        # Create the new branch with the specified commit
+        repo.create_git_ref(f"refs/heads/{target_branch}", commit_sha)
+
+        logging.info(f"New branch '{target_branch}' created successfully!")
 
     def add_pr_comments(self, comments: List[CodeComment]):
         github_output = os.environ.get("GITHUB_OUTPUT", None)

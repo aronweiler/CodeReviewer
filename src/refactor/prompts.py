@@ -1,6 +1,6 @@
 from langchain.prompts import PromptTemplate
 
-REFACTOR_TEMPLATE = """You are a world-renowned expert in {language} code. You have been tasked with identifying security vulnerabilities, performance bottlenecks, memory management concerns, and code correctness problems with the following code.
+REFACTOR_TEMPLATE = """You are a world-renowned expert in all programming languages and practices. You have been tasked with identifying security vulnerabilities, performance bottlenecks, memory management concerns, best practices, and code correctness problems with the following code.
 
 The code below is a part of a larger code base.
 
@@ -8,16 +8,17 @@ The code below is a part of a larger code base.
 {code}
 ----- END CODE -----
 
-Your task is to review the code for any issues mentioned above, and refactor the code to address any issues you find.  In addition, please try to make the code more readable and maintainable (such as by adding comments, renaming variables, etc.).
+Please refactor this code keeping in mind your goal to fix any of the issues found above, such as security vulnerabilities, performance bottlenecks, memory management concerns, best practices, and code correctness problems.  
 
-Only output the updated code, not anything else.
+In addition, please try to make the code more readable and maintainable (such as by reorganizing, removing unused code, adding comments, correcting grammar, etc.).
 
-Updated code:
+Return ONLY the newly refactored code, and nothing else.  Your refactored code will overwrite the existing code.
+
+Refactored Code:
 """
 
-
 REFACTOR_PROMPT = PromptTemplate(
-    input_variables=["language", "code"],
+    input_variables=["code"],
     template=REFACTOR_TEMPLATE,
 )
 
