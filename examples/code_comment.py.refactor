@@ -1,0 +1,10 @@
+from typing import Optional
+
+class CodeComment:
+    """A code comment."""
+
+    def __init__(self, comment: str, start: Optional[int] = None, end: Optional[int] = None, file_path: Optional[str] = None):
+        self.start = start
+        self.end = end
+        self.comment = comment
+        self.file_path = file_path

@@ -17,16 +17,23 @@ from datetime import datetime
 from typing import Union, List, Dict
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
-from review_configuration import ReviewConfiguration
-from prompts import REVIEW_PROMPT, REVIEW_TEMPLATE, SUMMARIZE_PROMPT, SUMMARIZE_TEMPLATE
-from token_helper import simple_get_tokens_for_message
-from integrations.commenter_base import CodeComment
+from code_reviewer_configuration import CodeReviewerConfiguration
+from review.prompts import (
+    REVIEW_PROMPT,
+    REVIEW_TEMPLATE,
+    SUMMARIZE_PROMPT,
+    SUMMARIZE_TEMPLATE,
+)
+from utilities.token_helper import simple_get_tokens_for_message
+from review.code_comment import CodeComment
+from utilities.open_ai import get_openai_api_key
 
+# TODO: Expand this list- most of the stuff we have doesn't need to be split, anyway.
 SUPPORTED_FILE_TYPES = {"py": Language.PYTHON, "cpp": Language.CPP}
 
 
 class CodeReviewer:
-    def __init__(self, configuration: ReviewConfiguration):
+    def __init__(self, configuration: CodeReviewerConfiguration):
         self.configuration = configuration
         self.llm_arguments_configuration = configuration.llm_arguments
 
@@ -39,7 +46,7 @@ class CodeReviewer:
         self.llm = ChatOpenAI(
             model=self.llm_arguments_configuration.model,
             temperature=self.llm_arguments_configuration.temperature,
-            openai_api_key=self.get_openai_api_key(),
+            openai_api_key=get_openai_api_key(),
             max_tokens=self.llm_arguments_configuration.max_completion_tokens,
         )
 
@@ -68,7 +75,7 @@ class CodeReviewer:
             # We don't want to create excessive calls to the LLM, so we will combine chunks into a single call as long as they fit within the remaining prompt tokens
 
             logging.info(
-                f"Reviewing {documents['metadatas'][i]['file_name']}, chunk {documents['metadatas'][i]['chunk']}"
+                f"Reviewing {documents['metadatas'][i]['file_path']}, chunk {documents['metadatas'][i]['chunk']}"
             )
             code_to_review = documents["documents"][i]
 
@@ -86,18 +93,20 @@ class CodeReviewer:
             documents["metadatas"][i]["review"] = chunk_review
 
             # Load the chunk_review into json
-            for comment in self.get_comments(chunk_review['text'], documents["metadatas"][i]["file_name"]):
+            for comment in self.get_comments(
+                chunk_review["text"], documents["metadatas"][i]["file_path"]
+            ):
                 comments.append(comment)
 
         return comments
 
-    def get_comments(self, chunk_review: str, file_path:str) -> List[CodeComment]:
+    def get_comments(self, chunk_review: str, file_path: str) -> List[CodeComment]:
         chunk_review_json = json.loads(chunk_review)
         comments = []
         for comment in chunk_review_json["comments"]:
-            comments.append(CodeComment(**comment, file_path=file_path))  
+            comments.append(CodeComment(**comment, file_path=file_path))
 
-        return comments          
+        return comments
 
     def split_and_add_to_datastore(
         self, target_files: List[str], max_split_size: int
@@ -158,7 +167,7 @@ class CodeReviewer:
                         break
 
                 d.metadata = {
-                    "file_name": file,
+                    "file_path": file,
                     "chunk": chunk,
                     "language": language,
                     "starting_line_number": starting_line,
@@ -177,7 +186,7 @@ class CodeReviewer:
 
             logging.debug(f"Split {file} into {chunk} chunks")
 
-        return Chroma.from_documents(documents, OpenAIEmbeddings())    
+        return Chroma.from_documents(documents, OpenAIEmbeddings())
 
     def create_embedding(self, text: str, embedding_model="text-embedding-ada-002"):
         return openai.Embedding.create(input=[text], model=embedding_model)["data"][0][
@@ -195,12 +204,10 @@ class CodeReviewer:
             }
         )
 
-    def get_openai_api_key(self):
-        return dotenv_values().get("OPENAI_API_KEY")
 
 # Testing
 if __name__ == "__main__":
-    configuration = ReviewConfiguration.from_environment()
+    configuration = CodeReviewerConfiguration.from_environment()
     cr = CodeReviewer(configuration)
     test_json = """{
     "comments": [

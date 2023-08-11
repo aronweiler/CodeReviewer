@@ -47,7 +47,6 @@ SUMMARIZE_TEMPLATE = """Summarize the functionality of the following {language} 
 """
 
 
-
 SUMMARIZE_PROMPT = PromptTemplate(
     input_variables=["language", "code"],
     template=SUMMARIZE_TEMPLATE,
