@@ -15,22 +15,16 @@ class FileIntegration(SourceControlBase):
         # Get the output file from the environment variable or use the default
         self.output = os.environ.get("FILE_OUTPUT", "output.md")
 
-    def create_refactor_branch(self, source_branch: str, target_branch: str, files):       
-        pass
-
-    def commit_changes(self, branch_name:str, commit_message:str, code_documents:List[Document]):
+    def commit_changes(self, source_branch, target_branch, commit_message, code_documents: List[dict]):
         # Iterate over the metadata of each document
         for metadata in code_documents['metadatas']:
             # Create a path for the refactored file
-            path = metadata['file_name'] + ".refactored"
+            path = metadata['file_path'] + ".refactored"
             
             # Open the file in append mode if it exists, otherwise create a new file
             mode = 'a' if os.path.exists(path) else 'w'
             with open(path, mode) as file:
                 file.write(metadata['refactored_code'])
-
-    def create_branch(self, source_branch: str, target_branch: str):
-        pass    
 
     def add_pr_comments(self, comments: List[CodeComment]):
         last_file = ''

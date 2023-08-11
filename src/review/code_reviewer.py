@@ -75,7 +75,7 @@ class CodeReviewer:
             # We don't want to create excessive calls to the LLM, so we will combine chunks into a single call as long as they fit within the remaining prompt tokens
 
             logging.info(
-                f"Reviewing {documents['metadatas'][i]['file_name']}, chunk {documents['metadatas'][i]['chunk']}"
+                f"Reviewing {documents['metadatas'][i]['file_path']}, chunk {documents['metadatas'][i]['chunk']}"
             )
             code_to_review = documents["documents"][i]
 
@@ -94,7 +94,7 @@ class CodeReviewer:
 
             # Load the chunk_review into json
             for comment in self.get_comments(
-                chunk_review["text"], documents["metadatas"][i]["file_name"]
+                chunk_review["text"], documents["metadatas"][i]["file_path"]
             ):
                 comments.append(comment)
 
@@ -167,7 +167,7 @@ class CodeReviewer:
                         break
 
                 d.metadata = {
-                    "file_name": file,
+                    "file_path": file,
                     "chunk": chunk,
                     "language": language,
                     "starting_line_number": starting_line,
