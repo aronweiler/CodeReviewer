@@ -113,7 +113,7 @@ class ReviewRunner:
         numeric_level = getattr(logging, self.log_level.upper(), None)
         if not isinstance(numeric_level, int):
             raise ValueError(f"Invalid log level: {self.log_level}")
-        logging.basicConfig(level=numeric_level)
+        logging.root.setLevel(level=numeric_level)
         logging.info("Started logging")
 
 
