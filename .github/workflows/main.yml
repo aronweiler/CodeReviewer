@@ -62,6 +62,7 @@ jobs:
         uses: aronweiler/codereviewer@main
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CR_PROVIDER: "github"
           CR_MODEL: ${{ inputs.open_ai_model }}
           CR_TEMPERATURE: ${{ inputs.model_temperature }}
