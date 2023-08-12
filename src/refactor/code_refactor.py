@@ -1,4 +1,3 @@
-
 import json
 import logging
 from datetime import datetime
@@ -11,6 +10,8 @@ import openai
 from langchain import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
+from langchain.document_loaders.parsers import LanguageParser
+from langchain.document_loaders.generic import GenericLoader
 from langchain.document_loaders import TextLoader
 from langchain.docstore.document import Document
 from langchain.llms import OpenAI
@@ -19,7 +20,12 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 
 from code_reviewer_configuration import CodeReviewerConfiguration
-from refactor.prompts import REFACTOR_PROMPT, REFACTOR_TEMPLATE, SUMMARIZE_PROMPT, SUMMARIZE_TEMPLATE
+from refactor.prompts import (
+    REFACTOR_PROMPT,
+    REFACTOR_TEMPLATE,
+    SUMMARIZE_PROMPT,
+    SUMMARIZE_TEMPLATE,
+)
 from utilities.token_helper import simple_get_tokens_for_message
 from utilities.open_ai import get_openai_api_key
 
@@ -78,24 +84,60 @@ class CodeRefactor:
         #         )
         #         documents["metadatas"][i]["summary"] = chunk_summary
 
-        # Refactor the code
+        # Refactor the code        
+        last_file_path = ""
+        metadata_list = []
         for i in range(num_documents):
-            logging.info(f"Refactoring {documents['metadatas'][i]['file_path']}")
+            current_file_path = str(documents['metadatas'][i]['file_path'])
+            logging.info(f"Refactoring {current_file_path}")
             code_to_refactor = documents["documents"][i]
 
-            documents["metadatas"][i]["refactored_code"] = self.refactor_chain(
+            # Refactor the chunk
+            refactored_code = self.refactor_chain(
                 inputs={
                     "code": code_to_refactor,
                     "language": documents["metadatas"][i]["language"],
                 }
             )["text"]
 
-        return documents
+            if last_file_path != current_file_path:
+                # If it's not the last file name, add new metadata to the list
+                metadata_list.append({"file_path": current_file_path, "refactored_code": refactored_code})
+                # Then update the last file path
+                last_file_path = current_file_path
+            else:
+                # If it is the last file name, append the refactored code to the last metadata in the list
+                metadata_list[-1]["refactored_code"] += "\n" + refactored_code
+
+        #new_metadata_list = self.get_combined_metadata(metadata_list)
+        
+        return metadata_list # new_metadata_list    
+    
+    def get_combined_metadata(self, metadata_list):
+        combined_data = {}
+        for item in metadata_list:
+            file_path = item["file_path"]
+            refactored_code = item["refactored_code"]
+            combined_data.setdefault(file_path, []).append(refactored_code)
+
+        unique_result_list = []
+        for file_path, refactored_codes in combined_data.items():
+            combined_code = "\n".join(refactored_codes)
+            unique_result_list.append({"file_path": file_path, "combined_code": combined_code})
+
+        return unique_result_list
 
     def add_to_datastore(self, target_files: List[str], max_split_size: int) -> Chroma:
         documents = []
         for file in target_files:
             logging.debug(f"Looking at {file}")
+
+            ## TODO: We don't support files larger than the context window yet, until we get better splitting in place
+            if simple_get_tokens_for_message(file) > max_split_size:
+                logging.warning(
+                    f"Skipping {file} because it is too large to process.  Max size is {max_split_size} tokens.  This will change as soon as I get better splitting in place."
+                )
+                continue
 
             # Get the file extension
             file_extension = file.split(".")[-1]
@@ -113,6 +155,15 @@ class CodeRefactor:
             # Read the file in
             with open(file, "r") as f:
                 file_contents = f.read()
+
+            # TODO: Implement this later, see: https://python.langchain.com/docs/use_cases/code_understanding
+            # loader = GenericLoader.from_filesystem(
+            #     repo_path+"/libs/langchain/langchain",
+            #     glob="**/*",
+            #     suffixes=[".py"],
+            #     parser=LanguageParser(language=Language.PYTHON, parser_threshold=500)
+            # )
+            # documents = loader.load()
 
             # Split the code into chunks
             code_splitter = RecursiveCharacterTextSplitter.from_language(
@@ -132,4 +183,3 @@ class CodeRefactor:
                 documents.append(d)
 
         return Chroma.from_documents(documents, OpenAIEmbeddings())
-
