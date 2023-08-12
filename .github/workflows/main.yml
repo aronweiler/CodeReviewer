@@ -3,7 +3,8 @@ name: Code Refactor
 on:
   workflow_dispatch:  # Triggered manually through the GitHub UI
     inputs:
-      type:
+      cr_type:
+        type: choice
         description: 'Type of action to perform'
         required: true
         default: 'review'
@@ -71,5 +72,5 @@ jobs:
           CR_LOG_LEVEL: ${{ inputs.log_level }}
           CR_SOURCE_BRANCH: ${{ github.ref }}
           CR_TARGET_BRANCH: ${{ inputs.target_branch }}          
-          CR_TYPE: ${{ inputs.type }}
+          CR_TYPE: ${{ inputs.cr_type }}
           CR_TARGET_FILES: ${{ inputs.target_files }}
