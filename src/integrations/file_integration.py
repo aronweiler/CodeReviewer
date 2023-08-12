@@ -19,7 +19,7 @@ class FileIntegration(SourceControlBase):
         # Iterate over the metadata of each document
         for metadata in code_documents['metadatas']:
             # Create a path for the refactored file
-            path = metadata['file_path'] + ".refactored"
+            path = metadata['file_path'] + ".refactored.py"
             
             # Open the file in append mode if it exists, otherwise create a new file
             mode = 'a' if os.path.exists(path) else 'w'
