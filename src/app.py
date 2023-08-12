@@ -90,11 +90,7 @@ class ReviewRunner:
     def load_arguments(self):
         # Load the arguments from the environment
 
-        # These are set in the LLMConfiguration class
-        # self.model = os.getenv("CR_MODEL", "gpt-3.5-turbo-0613")
-        # self.temperature = os.getenv("CR_TEMPERATURE", "0.0")
-        # self.max_supported_tokens = os.getenv("CR_MAX_SUPPORTED_TOKENS", "4096")
-        # self.max_completion_tokens = os.getenv("CR_MAX_COMPLETION_TOKENS", "2048")
+        # Model, temp, and tokens are set in the LLMConfiguration class
 
         self.log_level = os.getenv("CR_LOG_LEVEL", "info")
         self.source_branch = os.getenv("CR_SOURCE_BRANCH", "main")

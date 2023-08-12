@@ -48,6 +48,8 @@ class CodeRefactor:
             - simple_get_tokens_for_message(REFACTOR_TEMPLATE)
         )
 
+        logging.debug(f"Remaining prompt tokens: {self.remaining_prompt_tokens}")
+
         # Initialize language model
         self.llm = ChatOpenAI(
             model=self.llm_arguments_configuration.model,
@@ -180,6 +182,8 @@ class CodeRefactor:
 
             for d in joined_docs:
                 d.metadata = {"file_path": file, "language": language}
+                logging.debug(f"Adding document {d}")
                 documents.append(d)
 
-        return Chroma.from_documents(documents, OpenAIEmbeddings())
+        logging.info(f"Created {len(documents)} documents, adding to the datastore...")
+        return Chroma.from_documents(documents, OpenAIEmbeddings(openai_api_key=get_openai_api_key()))

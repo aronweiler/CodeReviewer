@@ -186,7 +186,7 @@ class CodeReviewer:
 
             logging.debug(f"Split {file} into {chunk} chunks")
 
-        return Chroma.from_documents(documents, OpenAIEmbeddings())
+        return Chroma.from_documents(documents, OpenAIEmbeddings(openai_api_key=get_openai_api_key()))
 
     def create_embedding(self, text: str, embedding_model="text-embedding-ada-002"):
         return openai.Embedding.create(input=[text], model=embedding_model)["data"][0][
