@@ -75,7 +75,7 @@ jobs:
           CR_MAX_SUPPORTED_TOKENS: ${{ inputs.max_supported_tokens }}
           CR_MAX_COMPLETION_TOKENS: ${{ inputs.max_completion_tokens }}
           CR_LOG_LEVEL: ${{ inputs.log_level }}
-          CR_SOURCE_BRANCH: ${{ github.ref }}
+          CR_SOURCE_BRANCH: ${{ github.ref_name }}
           CR_TARGET_BRANCH: ${{ inputs.target_branch }}          
           CR_TYPE: ${{ inputs.cr_type }}
           CR_TARGET_FILES: ${{ inputs.target_files }}

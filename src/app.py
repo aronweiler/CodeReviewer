@@ -32,6 +32,9 @@ class ReviewRunner:
         # Get the source code files
         source_code_files = self.get_source_code_files()
 
+        if len(source_code_files) == 0:
+            raise ValueError("No source code files found")
+
         # Get the source and target branches from arguments
         source_branch = self.source_branch
         target_branch = self.target_branch
@@ -57,6 +60,10 @@ class ReviewRunner:
         # Get the source code files
         source_code_files = self.get_source_code_files()
 
+        if len(source_code_files) == 0:
+            raise ValueError("No source code files found")
+
+
         # Initialize the CodeReviewer class and run the review
         code_reviewer = CodeReviewer(self.configuration)
         review = code_reviewer.review(source_code_files)
@@ -70,6 +77,7 @@ class ReviewRunner:
         paths = self.target_files
         if paths is None or len(paths) == 0:
             logging.info("No paths specified, using all files in repo")
+            paths = [os.getcwd()]
 
         logging.debug("Code Refactor Paths: " + str(paths))
 
@@ -89,7 +97,6 @@ class ReviewRunner:
 
     def load_arguments(self):
         # Load the arguments from the environment
-
         # Model, temp, and tokens are set in the LLMConfiguration class
 
         self.log_level = os.getenv("CR_LOG_LEVEL", "info")
