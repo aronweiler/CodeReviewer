@@ -1,11 +1,14 @@
+# Refactored python CODE ONLY:
+
 from langchain.prompts import PromptTemplate
 
-REVIEW_TEMPLATE = """You are a world-renowned expert in {language} code. You have been tasked with identifying security vulnerabilities, performance bottlenecks, memory management concerns, and code correctness problems with the following code.
+# Refactored code to use f-strings for string formatting
+REVIEW_TEMPLATE = f"""You are a world-renowned expert in {{language}} code. You have been tasked with identifying security vulnerabilities, performance bottlenecks, memory management concerns, and code correctness problems with the following code.
 
 The code below is a part of a larger code base.
 
 ----- BEGIN CODE -----
-{code}
+{{code}}
 ----- END CODE -----
 
 Your code review output should be only JSON formatted text.
@@ -32,21 +35,22 @@ EXAMPLE OUTPUT:
 Code review in JSON format:
 """
 
+# Refactored code to use f-strings for string formatting
+SUMMARIZE_TEMPLATE = f"""Summarize the functionality of the following {{language}} code. 
 
+{{code}}
+
+### Response in Markdown:
+# Here is the summary of the {{language}} code in Markdown:
+"""
+
+# Refactored code to use f-strings for string formatting
 REVIEW_PROMPT = PromptTemplate(
     input_variables=["language", "code"],
     template=REVIEW_TEMPLATE,
 )
 
-SUMMARIZE_TEMPLATE = """Summarize the functionality of the following {language} code. 
-
-{code}
-
-### Response in Markdown:
-# Here is the summary of the {language} code in Markdown:
-"""
-
-
+# Refactored code to use f-strings for string formatting
 SUMMARIZE_PROMPT = PromptTemplate(
     input_variables=["language", "code"],
     template=SUMMARIZE_TEMPLATE,

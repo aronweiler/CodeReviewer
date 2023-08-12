@@ -1,34 +1,21 @@
 import json
-from enum import Enum
+import logging
+from typing import List
+from datetime import datetime
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-import openai
-from dotenv import dotenv_values
-from langchain import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-    Language,
-)
+from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
 from langchain.document_loaders import TextLoader
 from langchain.docstore.document import Document
-import logging
-from datetime import datetime
-from typing import Union, List, Dict
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from code_reviewer_configuration import CodeReviewerConfiguration
-from review.prompts import (
-    REVIEW_PROMPT,
-    REVIEW_TEMPLATE,
-    SUMMARIZE_PROMPT,
-    SUMMARIZE_TEMPLATE,
-)
+from review.prompts import REVIEW_PROMPT, REVIEW_TEMPLATE, SUMMARIZE_PROMPT, SUMMARIZE_TEMPLATE
 from utilities.token_helper import simple_get_tokens_for_message
 from review.code_comment import CodeComment
 from utilities.open_ai import get_openai_api_key
 
-# TODO: Expand this list- most of the stuff we have doesn't need to be split, anyway.
 SUPPORTED_FILE_TYPES = {"py": Language.PYTHON, "cpp": Language.CPP}
 
 
@@ -54,12 +41,6 @@ class CodeReviewer:
         self.summarize_chain = LLMChain(llm=self.llm, prompt=SUMMARIZE_PROMPT)
 
     def review(self, target_files: List[str]) -> List[CodeComment]:
-        # Iterate through the files, and do several things:
-        # - Read the file
-        # - Split the files into chunks of (max_tokens - max_completion_tokens)
-        # - Create embeddings of each chunk so that the LLM can search for them when required
-        # - Create an in-memory database of the file chunks and embeddings for later reference by the LLM
-
         vector_db = self.split_and_add_to_datastore(
             target_files, self.remaining_prompt_tokens
         )
@@ -70,29 +51,23 @@ class CodeReviewer:
         logging.info(f"Created vector database with {num_documents} chunks of code")
 
         comments = []
-        # Once the files are split and added to the datastore, we can start the review process
-        for i in range(0, num_documents):
-            # We don't want to create excessive calls to the LLM, so we will combine chunks into a single call as long as they fit within the remaining prompt tokens
-
+        for i in range(num_documents):
             logging.info(
                 f"Reviewing {documents['metadatas'][i]['file_path']}, chunk {documents['metadatas'][i]['chunk']}"
             )
             code_to_review = documents["documents"][i]
 
-            # Summarize the chunk
             if self.configuration.include_summary:
                 chunk_summary = self.summarize_chunk(
                     documents["metadatas"][i]["language"], code_to_review
                 )
                 documents["metadatas"][i]["summary"] = chunk_summary
 
-            # Review the chunk
             chunk_review = self.review_chunk(
                 documents["metadatas"][i]["language"], code_to_review
             )
             documents["metadatas"][i]["review"] = chunk_review
 
-            # Load the chunk_review into json
             for comment in self.get_comments(
                 chunk_review["text"], documents["metadatas"][i]["file_path"]
             ):
@@ -111,16 +86,12 @@ class CodeReviewer:
     def split_and_add_to_datastore(
         self, target_files: List[str], max_split_size: int
     ) -> Chroma:
-        # Split the file into chunks of (max_tokens - max_completion_tokens)
-        # This is because the LLM will need to add the completion tokens to the end of the chunk
         documents = []
         for file in target_files:
             logging.debug(f"Looking at {file}")
 
-            # Get the file extension
             file_extension = file.split(".")[-1]
 
-            # If we support it, continue, otherwise skip it
             if file_extension not in SUPPORTED_FILE_TYPES:
                 logging.debug(
                     f"Skipping {file} because it is not a supported file type"
@@ -130,13 +101,9 @@ class CodeReviewer:
             language = SUPPORTED_FILE_TYPES[file_extension]
             logging.debug(f"Language is {language} for {file}")
 
-            # Read the file in
             with open(file, "r") as f:
                 file_contents = f.read()
 
-            # TODO: When looking at diffs for review, I need to diff two versions of this file,
-            # and then extract the chunks of diffs (much like git does),
-            # then need to ingest that into the datastore along with the full file
             code_splitter = RecursiveCharacterTextSplitter.from_language(
                 language=language,
                 chunk_size=max_split_size,
@@ -146,18 +113,15 @@ class CodeReviewer:
                 length_function=simple_get_tokens_for_message,
             )
 
-            # Unwind this dumbass list-in-a-list
             joined_docs = code_splitter.create_documents([file_contents])
             docs = [d for d in joined_docs]
 
             all_lines = file_contents.rstrip().split("\n")
 
-            # Create a list of docs with the medadata
             chunk = 0
             starting_search_line_index = 0
             for d in docs:
                 chunk += 1
-                # Find the true starting line number
                 for line_number, line in enumerate(
                     all_lines[starting_search_line_index:], start=1
                 ):
@@ -173,9 +137,6 @@ class CodeReviewer:
                     "starting_line_number": starting_line,
                 }
 
-                # Because of how little LLMs pay attention to things like a single line number prompt,
-                # (e.g. ----- BEGIN CODE: Starting Line #: {starting_line_number}  -----)
-                # I am going to add line numbers to each line of code
                 page_content_lines = d.page_content.split("\n")
                 for i, line in enumerate(page_content_lines, start=0):
                     page_content_lines[i] = f"{i + starting_line}: {line}"
@@ -186,7 +147,9 @@ class CodeReviewer:
 
             logging.debug(f"Split {file} into {chunk} chunks")
 
-        return Chroma.from_documents(documents, OpenAIEmbeddings(openai_api_key=get_openai_api_key()))
+        return Chroma.from_documents(
+            documents, OpenAIEmbeddings(openai_api_key=get_openai_api_key())
+        )
 
     def create_embedding(self, text: str, embedding_model="text-embedding-ada-002"):
         return openai.Embedding.create(input=[text], model=embedding_model)["data"][0][
@@ -205,7 +168,6 @@ class CodeReviewer:
         )
 
 
-# Testing
 if __name__ == "__main__":
     configuration = CodeReviewerConfiguration.from_environment()
     cr = CodeReviewer(configuration)
