@@ -45,7 +45,7 @@ class ReviewRunner:
             source_branch=source_branch,
             target_branch=target_branch,
             commit_message="Auto-Refactor",
-            metadatas=refactored_code_documents['metadatas'],
+            metadatas=refactored_code_documents,
         )
 
     def do_code_documentation(self):
