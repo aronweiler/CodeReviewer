@@ -3,7 +3,7 @@ A LLM powered code reviewing refactoring, and documentation tool.
 
 I kicked this project off a while back because I wanted to have an LLM act as a code reviewer for me in absence of having a regular coding partner.  
 
-As the capabilities of large language models like [OpenAI's ChatGPT](chat.openai.com), or open-source models like [Wizard Coder](https://huggingface.co/WizardLM/WizardCoder-15B-V1.0), have progressed, having an AI review my code has become something of a requirement for me.
+As the capabilities of large language models like [OpenAI's ChatGPT](https://chat.openai.com), or open-source models like [Wizard Coder](https://huggingface.co/WizardLM/WizardCoder-15B-V1.0), have progressed, having an AI review my code has become something of a requirement for me.
 
 To that end, I've taken what used to be a local-run-only application and ported it to a Docker container, and now a [GitHub Action](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions).
 
@@ -40,7 +40,7 @@ You can run the app.py directly with the proper environment variables set.
 
 ### Environment variables:
 - **CR_TYPE**: The type of the action to perform.  This can be either `review`, `refactor`, or `document`.  Currently, only `refactor` is supported.
-- **OPENAI_API_KEY**: Your OpenAI API key, which you can get here: [platform.openai.com](platform.openai.com)
+- **OPENAI_API_KEY**: Your OpenAI API key, which you can get here: [platform.openai.com](https://platform.openai.com)
 - **GITHUB_TOKEN**: This is the token that the action will use to make changes / commits to your repository.  This can be extracted from `${{ secrets.GITHUB_TOKEN }}` in your action workflow.
 - **CR_PROVIDER**: Supported types right now are `github` and `file`.  This is required to be set to `github` if you are using the Action.  When running locally, you can set this to `file`.
 - **CR_MODEL**: Which OpenAI model to use.
@@ -77,7 +77,7 @@ The following are environment variables that must be set for ANY of the modes su
 #### Required input arguments for Code Refactoring:
 The following environment variables must be set for code refactoring.  Examples of these environment variables are shown in the [.github\workflows\main.yml](.github\workflows\main.yml) in this repo.
 
-- **OPENAI_API_KEY**: Your OpenAI API key, which you can get here: [platform.openai.com](platform.openai.com)
+- **OPENAI_API_KEY**: Your OpenAI API key, which you can get here: [platform.openai.com](https://platform.openai.com)
 - **GITHUB_TOKEN**: This is the token that the action will use to make changes / commits to your repository.  This can be extracted from `${{ secrets.GITHUB_TOKEN }}` in your action workflow.
 - **CR_PROVIDER**: This is required to be set to `github` for this action.  When running locally, you can set this to `file`.
 - **CR_MODEL**: Which OpenAI model to use for this run.
