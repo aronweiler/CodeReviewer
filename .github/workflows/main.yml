@@ -13,7 +13,7 @@ on:
           - review
           - document
       target_branch:
-        description: 'Target Branch'     
+        description: 'Target Branch: The branch to which the code review will be submitted (e.g. code-review-branch).'     
         required: true
       target_files:
         type: string
