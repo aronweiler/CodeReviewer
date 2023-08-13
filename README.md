@@ -30,30 +30,28 @@ This tool is consumable through a number of means-
 - As a GitHub Action
 
 ## Running the Python Code
-You can run the app.py directly with the following command-line arguments.
+You can run the app.py directly with the proper environment variables set.
 
 - Make sure you `pip install -r requirements.txt` first.
 
 - Replace the placeholders in the `.env.template` file with your own values, and rename the file to `.env`.
 
-- All of the following modes are used by calling `python run.py` and setting the `--type` command line argument.
+- Run the `python run.py` after setting the following environment variables.
 
-### For Code Reviews
-
-`--type=review <file paths>`
-
-#### Example:
-
-`--type=review src/my_file.py 'src/space in/path.py`
-
-This will review the provided files, and then output to the specified output file (source control integration not available yet)
-
-### For Refactoring
-
-`--type=refactor --source_branch=<source branch> --target_branch=<target branch> <file paths>`
-
-Refactoring your code using the `File` provider in the `.env` file will create a `.refactored` code file next to the original file.
-
+### Environment variables:
+- **CR_TYPE**: The type of the action to perform.  This can be either `review`, `refactor`, or `document`.  Currently, only `refactor` is supported.
+- **OPENAI_API_KEY**: Your OpenAI API key, which you can get here: [platform.openai.com](platform.openai.com)
+- **GITHUB_TOKEN**: This is the token that the action will use to make changes / commits to your repository.  This can be extracted from `${{ secrets.GITHUB_TOKEN }}` in your action workflow.
+- **CR_PROVIDER**: Supported types right now are `github` and `file`.  This is required to be set to `github` if you are using the Action.  When running locally, you can set this to `file`.
+- **CR_MODEL**: Which OpenAI model to use.
+- **CR_TEMPERATURE**: Model temperature.
+- **CR_MAX_SUPPORTED_TOKENS**: The maximum number of tokens that the model supports, or lower if you want to restrict usage.
+- **CR_MAX_COMPLETION_TOKENS**: The number of tokens to use for the completion.  **Note:** This reduces the number of tokens available for the prompt (i.e. the code file to review).  This number might require some tuning from you in order to get the desired performance.
+- **CR_SOURCE_BRANCH**: The source branch name the use for the review/refactor/document run.
+- **CR_TARGET_BRANCH**: The target branch where you want the output files committed.  **Note**: Commits to this branch will use `-force`.
+- **CR_TARGET_FILES**: Specifies any target files or directories that you might want to limit the refactor to.  This is not required, and when not specified the action will use the root directory.  
+  - **⚠️WARNING⚠️** this can get expensive if you have a lot of files, and you send them all to OpenAI.
+- **CR_LOG_LEVEL**: Logging level supported by the action. Default is `INFO`.
 
 ## Running in a Docker Container
 TBD
@@ -88,8 +86,6 @@ The following environment variables must be set for code refactoring.  Examples 
 - **CR_MAX_COMPLETION_TOKENS**: The number of tokens to use for the completion.  **Note:** This reduces the number of tokens available for the prompt (i.e. the code file to review).  This number might require some tuning from you in order to get the desired performance.
 - **CR_SOURCE_BRANCH**: The source branch name the use for the review/refactor.
 - **CR_TARGET_BRANCH**: The target branch where you want the output files committed.  Note: Commits to this branch will use `-force`.
-
-
 
 ### Optional input and output arguments
 
