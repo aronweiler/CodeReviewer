@@ -1,5 +1,5 @@
 # CodeReviewer
-A LLM powered code reviewing refactoring, and documentation tool.
+A LLM powered code reviewing, refactoring, and documentation tool.
 
 I kicked this project off a while back because I wanted to have an LLM act as a code reviewer for me in absence of having a regular coding partner.  
 
@@ -11,9 +11,9 @@ To that end, I've taken what used to be a local-run-only application and ported 
 
 - ✅ Basic Code Review
   - Run types: Local only
-  - Currently reviews a single file at a time (e.g. no other files in context), producing line-numbered Markdown output
+  - Currently reviews multiple files, a single file at a time (e.g. no other files in context), producing a single line-numbered Markdown output.  If reviewing multiple files, each file's review will be in the final output.
 - ✅ Basic Refactor
-  - Run types: Local, GitHub Action
+  - Run types: Local, [GitHub Action](#Running-as-a-GitHub-Action)
   - Currently refactors single file at a time, creating a new branch where those files are checked in  
 - ☑️ Basic Documentation
   - Review and summarize code within a repository (or just file list).  Create markdown documentation / architecture diagrams.
@@ -41,9 +41,9 @@ You can run the app.py directly with the proper environment variables set.
 ### Environment variables:
 - **CR_TYPE**: The type of the action to perform.  This can be either `review`, `refactor`, or `document`.  Currently, only `refactor` is supported.
 - **OPENAI_API_KEY**: Your OpenAI API key, which you can get here: [platform.openai.com](https://platform.openai.com)
-- **GITHUB_TOKEN**: This is the token that the action will use to make changes / commits to your repository.  This can be extracted from `${{ secrets.GITHUB_TOKEN }}` in your action workflow.
+- **GITHUB_TOKEN**: This is the token that the action will use to make changes / commits to your repository.  If you are using the `github` `CR_PROVIDER`, this should be set to a token (PAT or otherwise) that has write access to the repo you are targeting.
 - **CR_PROVIDER**: Supported types right now are `github` and `file`.  This is required to be set to `github` if you are using the Action.  When running locally, you can set this to `file`.
-- **CR_MODEL**: Which OpenAI model to use.
+- **CR_MODEL**: Which OpenAI model to use, e.g. `gpt-4`.  
 - **CR_TEMPERATURE**: Model temperature.
 - **CR_MAX_SUPPORTED_TOKENS**: The maximum number of tokens that the model supports, or lower if you want to restrict usage.
 - **CR_MAX_COMPLETION_TOKENS**: The number of tokens to use for the completion.  **Note:** This reduces the number of tokens available for the prompt (i.e. the code file to review).  This number might require some tuning from you in order to get the desired performance.
