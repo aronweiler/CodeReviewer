@@ -1,6 +1,6 @@
 """VectorStore wrapper around a Postgres/PGVector database."""
+# Importing necessary libraries and modules
 from __future__ import annotations
-
 import enum
 import logging
 import uuid
@@ -15,75 +15,61 @@ from typing import (
     Tuple,
     Type,
 )
-
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Session, declarative_base
 
+# Importing necessary modules from the project
 from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
 from langchain.utils import get_from_dict_or_env
 from langchain.vectorstores.base import VectorStore
 
+# Checking if the type checking is enabled
 if TYPE_CHECKING:
     from langchain.vectorstores._pgvector_data_models import CollectionStore
 
-
+# Enum class for distance strategies
 class DistanceStrategy(str, enum.Enum):
     """Enumerator of the Distance strategies."""
-
     EUCLIDEAN = "l2"
     COSINE = "cosine"
     MAX_INNER_PRODUCT = "inner"
 
-
+# Default distance strategy
 DEFAULT_DISTANCE_STRATEGY = DistanceStrategy.COSINE
 
+# Base class for SQLAlchemy ORM
 Base = declarative_base()  # type: Any
 
-
+# Default collection name
 _LANGCHAIN_DEFAULT_COLLECTION_NAME = "langchain"
 
-
+# Base model class for SQLAlchemy ORM
 class BaseModel(Base):
     __abstract__ = True
     uuid = sqlalchemy.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+```python
+import logging
+import sqlalchemy
+import uuid
+from typing import Any, Callable, List, Optional, Tuple, Type
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import text as sqlalchemy_text
+
+from langchain.vectorstores._pgvector_data_models import CollectionStore, EmbeddingStore
+from langchain.embeddings.base import Embeddings
+from langchain.vectorstores.base import VectorStore, Document
+from langchain.vectorstores.utils import get_from_dict_or_env
+
+# Constants for default values
+_LANGCHAIN_DEFAULT_COLLECTION_NAME = "langchain"
+DEFAULT_DISTANCE_STRATEGY = "COSINE"
 
 
 class PGVector(VectorStore):
-    """VectorStore implementation using Postgres and pgvector.
-
-    To use, you should have the ``pgvector`` python package installed.
-
-    Args:
-        connection_string: Postgres connection string.
-        embedding_function: Any embedding function implementing
-            `langchain.embeddings.base.Embeddings` interface.
-        collection_name: The name of the collection to use. (default: langchain)
-            NOTE: This is not the name of the table, but the name of the collection.
-            The tables will be created when initializing the store (if not exists)
-            So, make sure the user has the right permissions to create tables.
-        distance_strategy: The distance strategy to use. (default: COSINE)
-        pre_delete_collection: If True, will delete the collection if it exists.
-            (default: False). Useful for testing.
-
-    Example:
-        .. code-block:: python
-
-            from langchain.vectorstores import PGVector
-            from langchain.embeddings.openai import OpenAIEmbeddings
-
-            CONNECTION_STRING = "postgresql+psycopg2://hwc@localhost:5432/test3"
-            COLLECTION_NAME = "state_of_the_union_test"
-            embeddings = OpenAIEmbeddings()
-            vectorestore = PGVector.from_documents(
-                embedding=embeddings,
-                documents=docs,
-                collection_name=COLLECTION_NAME,
-                connection_string=CONNECTION_STRING,
-            )
-
-
+    """
+    VectorStore implementation using Postgres and pgvector.
     """
 
     def __init__(
@@ -92,7 +78,7 @@ class PGVector(VectorStore):
         embedding_function: Embeddings,
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
         collection_metadata: Optional[dict] = None,
-        distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
+        distance_strategy: str = DEFAULT_DISTANCE_STRATEGY,
         pre_delete_collection: bool = False,
         logger: Optional[logging.Logger] = None,
         relevance_score_fn: Optional[Callable[[float], float]] = None,
@@ -107,19 +93,11 @@ class PGVector(VectorStore):
         self.override_relevance_score_fn = relevance_score_fn
         self.__post_init__()
 
-    def __post_init__(
-        self,
-    ) -> None:
+    def __post_init__(self) -> None:
         """
         Initialize the store.
         """
         self._conn = self.connect()
-        # self.create_vector_extension()
-        from langchain.vectorstores._pgvector_data_models import (
-            CollectionStore,
-            EmbeddingStore,
-        )
-
         self.CollectionStore = CollectionStore
         self.EmbeddingStore = EmbeddingStore
         self.create_tables_if_not_exists()
@@ -134,22 +112,9 @@ class PGVector(VectorStore):
         conn = engine.connect()
         return conn
 
-    def create_vector_extension(self) -> None:
-        try:
-            with Session(self._conn) as session:
-                statement = sqlalchemy.text("CREATE EXTENSION IF NOT EXISTS vector")
-                session.execute(statement)
-                session.commit()
-        except Exception as e:
-            self.logger.exception(e)
-
     def create_tables_if_not_exists(self) -> None:
         with self._conn.begin():
             Base.metadata.create_all(self._conn)
-
-    def drop_tables(self) -> None:
-        with self._conn.begin():
-            Base.metadata.drop_all(self._conn)
 
     def create_collection(self) -> None:
         if self.pre_delete_collection:
@@ -181,11 +146,11 @@ class PGVector(VectorStore):
         metadatas: Optional[List[dict]] = None,
         ids: Optional[List[str]] = None,
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
-        distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
+        distance_strategy: str = DEFAULT_DISTANCE_STRATEGY,
         connection_string: Optional[str] = None,
         pre_delete_collection: bool = False,
         **kwargs: Any,
-    ) -> PGVector:
+    ) -> "PGVector":
         if ids is None:
             ids = [str(uuid.uuid1()) for _ in texts]
 
@@ -217,13 +182,8 @@ class PGVector(VectorStore):
         ids: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> List[str]:
-        """Add embeddings to the vectorstore.
-
-        Args:
-            texts: Iterable of strings to add to the vectorstore.
-            embeddings: List of list of embedding vectors.
-            metadatas: List of metadatas associated with the texts.
-            kwargs: vectorstore specific parameters
+        """
+        Add embeddings to the vectorstore.
         """
         if ids is None:
             ids = [str(uuid.uuid1()) for _ in texts]
@@ -255,15 +215,8 @@ class PGVector(VectorStore):
         ids: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> List[str]:
-        """Run more texts through the embeddings and add to the vectorstore.
-
-        Args:
-            texts: Iterable of strings to add to the vectorstore.
-            metadatas: Optional list of metadatas associated with the texts.
-            kwargs: vectorstore specific parameters
-
-        Returns:
-            List of ids from adding the texts into the vectorstore.
+        """
+        Run more texts through the embeddings and add to the vectorstore.
         """
         embeddings = self.embedding_function.embed_documents(list(texts))
         return self.add_embeddings(
@@ -277,15 +230,8 @@ class PGVector(VectorStore):
         filter: Optional[dict] = None,
         **kwargs: Any,
     ) -> List[Document]:
-        """Run similarity search with PGVector with distance.
-
-        Args:
-            query (str): Query text to search for.
-            k (int): Number of results to return. Defaults to 4.
-            filter (Optional[Dict[str, str]]): Filter by metadata. Defaults to None.
-
-        Returns:
-            List of Documents most similar to the query.
+        """
+        Run similarity search with PGVector with distance.
         """
         embedding = self.embedding_function.embed_query(text=query)
         return self.similarity_search_by_vector(
@@ -300,15 +246,8 @@ class PGVector(VectorStore):
         k: int = 4,
         filter: Optional[dict] = None,
     ) -> List[Tuple[Document, float]]:
-        """Return docs most similar to query.
-
-        Args:
-            query: Text to look up documents similar to.
-            k: Number of Documents to return. Defaults to 4.
-            filter (Optional[Dict[str, str]]): Filter by metadata. Defaults to None.
-
-        Returns:
-            List of Documents most similar to the query and score for each
+        """
+        Return docs most similar to query.
         """
         embedding = self.embedding_function.embed_query(query)
         docs = self.similarity_search_with_score_by_vector(
@@ -399,15 +338,8 @@ class PGVector(VectorStore):
         filter: Optional[dict] = None,
         **kwargs: Any,
     ) -> List[Document]:
-        """Return docs most similar to embedding vector.
-
-        Args:
-            embedding: Embedding to look up documents similar to.
-            k: Number of Documents to return. Defaults to 4.
-            filter (Optional[Dict[str, str]]): Filter by metadata. Defaults to None.
-
-        Returns:
-            List of Documents most similar to the query vector.
+        """
+        Return docs most similar to embedding vector.
         """
         docs_and_scores = self.similarity_search_with_score_by_vector(
             embedding=embedding, k=k, filter=filter
@@ -421,16 +353,13 @@ class PGVector(VectorStore):
         embedding: Embeddings,
         metadatas: Optional[List[dict]] = None,
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
-        distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
+        distance_strategy: str = DEFAULT_DISTANCE_STRATEGY,
         ids: Optional[List[str]] = None,
         pre_delete_collection: bool = False,
         **kwargs: Any,
-    ) -> PGVector:
+    ) -> "PGVector":
         """
         Return VectorStore initialized from texts and embeddings.
-        Postgres connection string is required
-        "Either pass it as a parameter
-        or set the PGVECTOR_CONNECTION_STRING environment variable.
         """
         embeddings = embedding.embed_documents(list(texts))
 
@@ -453,28 +382,14 @@ class PGVector(VectorStore):
         embedding: Embeddings,
         metadatas: Optional[List[dict]] = None,
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
-        distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
+        distance_strategy: str = DEFAULT_DISTANCE_STRATEGY,
         ids: Optional[List[str]] = None,
         pre_delete_collection: bool = False,
         **kwargs: Any,
-    ) -> PGVector:
-        """Construct PGVector wrapper from raw documents and pre-
+    ) -> "PGVector":
+        """
+        Construct PGVector wrapper from raw documents and pre-
         generated embeddings.
-
-        Return VectorStore initialized from documents and embeddings.
-        Postgres connection string is required
-        "Either pass it as a parameter
-        or set the PGVECTOR_CONNECTION_STRING environment variable.
-
-        Example:
-            .. code-block:: python
-
-                from langchain import PGVector
-                from langchain.embeddings import OpenAIEmbeddings
-                embeddings = OpenAIEmbeddings()
-                text_embeddings = embeddings.embed_documents(texts)
-                text_embedding_pairs = list(zip(texts, text_embeddings))
-                faiss = PGVector.from_embeddings(text_embedding_pairs, embeddings)
         """
         texts = [t[0] for t in text_embeddings]
         embeddings = [t[1] for t in text_embeddings]
@@ -496,16 +411,13 @@ class PGVector(VectorStore):
         cls: Type[PGVector],
         embedding: Embeddings,
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
-        distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
+        distance_strategy: str = DEFAULT_DISTANCE_STRATEGY,
         pre_delete_collection: bool = False,
         **kwargs: Any,
-    ) -> PGVector:
+    ) -> "PGVector":
         """
-        Get intsance of an existing PGVector store.This method will
-        return the instance of the store without inserting any new
-        embeddings
+        Get instance of an existing PGVector store.
         """
-
         connection_string = cls.get_connection_string(kwargs)
 
         store = cls(
@@ -541,18 +453,14 @@ class PGVector(VectorStore):
         documents: List[Document],
         embedding: Embeddings,
         collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
-        distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
+        distance_strategy: str = DEFAULT_DISTANCE_STRATEGY,
         ids: Optional[List[str]] = None,
         pre_delete_collection: bool = False,
         **kwargs: Any,
-    ) -> PGVector:
+    ) -> "PGVector":
         """
         Return VectorStore initialized from documents and embeddings.
-        Postgres connection string is required
-        "Either pass it as a parameter
-        or set the PGVECTOR_CONNECTION_STRING environment variable.
         """
-
         texts = [d.page_content for d in documents]
         metadatas = [d.metadata for d in documents]
         connection_string = cls.get_connection_string(kwargs)
@@ -580,7 +488,9 @@ class PGVector(VectorStore):
         user: str,
         password: str,
     ) -> str:
-        """Return connection string from database parameters."""
+        """
+        Return connection string from database parameters.
+        """
         return f"postgresql+{driver}://{user}:{password}@{host}:{port}/{database}"
 
     def _select_relevance_score_fn(self) -> Callable[[float], float]:
@@ -594,18 +504,26 @@ class PGVector(VectorStore):
         """
         if self.override_relevance_score_fn is not None:
             return self.override_relevance_score_fn
+```
 
-        # Default strategy is to rely on distance strategy provided
-        # in vectorstore constructor
-        if self._distance_strategy == DistanceStrategy.COSINE:
-            return self._cosine_relevance_score_fn
-        elif self._distance_strategy == DistanceStrategy.EUCLIDEAN:
-            return self._euclidean_relevance_score_fn
-        elif self._distance_strategy == DistanceStrategy.MAX_INNER_PRODUCT:
-            return self._max_inner_product_relevance_score_fn
-        else:
-            raise ValueError(
-                "No supported normalization function"
-                f" for distance_strategy of {self._distance_strategy}."
-                "Consider providing relevance_score_fn to PGVector constructor."
-            )
+# Refactored code
+
+# The function below returns the appropriate relevance score function based on the distance strategy provided.
+# If the distance strategy is not recognized, it raises a ValueError.
+def get_relevance_score_fn(self):
+    # Mapping of distance strategies to their corresponding relevance score functions
+    strategy_to_function = {
+        DistanceStrategy.COSINE: self._cosine_relevance_score_fn,
+        DistanceStrategy.EUCLIDEAN: self._euclidean_relevance_score_fn,
+        DistanceStrategy.MAX_INNER_PRODUCT: self._max_inner_product_relevance_score_fn
+    }
+
+    # Try to get the relevance score function based on the distance strategy
+    try:
+        return strategy_to_function[self._distance_strategy]
+    except KeyError:
+        # If the distance strategy is not recognized, raise a ValueError with a helpful message
+        raise ValueError(
+            f"No supported normalization function for distance_strategy of {self._distance_strategy}. "
+            "Consider providing relevance_score_fn to PGVector constructor."
+        )
