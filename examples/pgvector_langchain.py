@@ -114,14 +114,6 @@ class PGVector(VectorStore):
         Initialize the store.
         """
         self._conn = self.connect()
-        # self.create_vector_extension()
-        from langchain.vectorstores._pgvector_data_models import (
-            CollectionStore,
-            EmbeddingStore,
-        )
-
-        self.CollectionStore = CollectionStore
-        self.EmbeddingStore = EmbeddingStore
         self.create_tables_if_not_exists()
         self.create_collection()
 
@@ -534,54 +526,6 @@ class PGVector(VectorStore):
             )
 
         return connection_string
-
-    @classmethod
-    def from_documents(
-        cls: Type[PGVector],
-        documents: List[Document],
-        embedding: Embeddings,
-        collection_name: str = _LANGCHAIN_DEFAULT_COLLECTION_NAME,
-        distance_strategy: DistanceStrategy = DEFAULT_DISTANCE_STRATEGY,
-        ids: Optional[List[str]] = None,
-        pre_delete_collection: bool = False,
-        **kwargs: Any,
-    ) -> PGVector:
-        """
-        Return VectorStore initialized from documents and embeddings.
-        Postgres connection string is required
-        "Either pass it as a parameter
-        or set the PGVECTOR_CONNECTION_STRING environment variable.
-        """
-
-        texts = [d.page_content for d in documents]
-        metadatas = [d.metadata for d in documents]
-        connection_string = cls.get_connection_string(kwargs)
-
-        kwargs["connection_string"] = connection_string
-
-        return cls.from_texts(
-            texts=texts,
-            pre_delete_collection=pre_delete_collection,
-            embedding=embedding,
-            distance_strategy=distance_strategy,
-            metadatas=metadatas,
-            ids=ids,
-            collection_name=collection_name,
-            **kwargs,
-        )
-
-    @classmethod
-    def connection_string_from_db_params(
-        cls,
-        driver: str,
-        host: str,
-        port: int,
-        database: str,
-        user: str,
-        password: str,
-    ) -> str:
-        """Return connection string from database parameters."""
-        return f"postgresql+{driver}://{user}:{password}@{host}:{port}/{database}"
 
     def _select_relevance_score_fn(self) -> Callable[[float], float]:
         """
