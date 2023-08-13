@@ -63,11 +63,10 @@ See [.github\workflows\main.yml](.github\workflows\main.yml)
 
 Currently I have tested the using the manual trigger (`workflow_dispatch`) within this action, so that is what I'd recommend.  However, if you set the proper environment variables, then it shouldn't matter how you run it.
 
-### A detailed description of what the action does
+### What the action does
 This action will perform a code review, a code refactor, or documentation tasks for you. 
 
 See: [Description at the top of this page](#CodeReviewer)
-
 
 ### Required input and output arguments
 The following are environment variables that must be set for ANY of the modes supported here.
@@ -89,7 +88,7 @@ The following environment variables must be set for code refactoring.  Examples 
 
 ### Optional input and output arguments
 
-#### Optional input arguments for Code Refactor
+#### Optional input arguments for Code Refactoring:
 - **CR_TARGET_FILES**: Specifies any target files or directories that you might want to limit the refactor to.  This is not required, and when not specified the action will use the root directory.  
   - **⚠️WARNING⚠️** this can get expensive if you have a lot of files, and you send them all to OpenAI.
 - **CR_LOG_LEVEL**: Logging level supported by the action. Default is `INFO`.
@@ -104,3 +103,35 @@ See: [Required input and output arguments](###Required-input-and-output-argument
 ### An example of how the action is used in a workflow
 
 See the example in this repository: [.github\workflows\main.yml](.github\workflows\main.yml)
+
+#### Here's a small sample of the use of this action:
+```yaml
+jobs:
+  code_review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Start code review step
+        id: code_review
+        uses: aronweiler/codereviewer@main
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CR_PROVIDER: "github"
+          CR_MODEL: ${{ inputs.open_ai_model }}
+          CR_TEMPERATURE: ${{ inputs.model_temperature }}
+          CR_MAX_SUPPORTED_TOKENS: ${{ inputs.max_supported_tokens }}
+          CR_MAX_COMPLETION_TOKENS: ${{ inputs.max_completion_tokens }}
+          CR_LOG_LEVEL: ${{ inputs.log_level }}
+          CR_SOURCE_BRANCH: ${{ github.ref_name }}
+          CR_TARGET_BRANCH: ${{ inputs.target_branch }}          
+          CR_TYPE: ${{ inputs.cr_type }}
+          CR_TARGET_FILES: ${{ inputs.target_files }}
+```
