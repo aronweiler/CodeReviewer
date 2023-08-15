@@ -1,20 +1,8 @@
-import json
 import logging
-from datetime import datetime
-from typing import Union, List, Dict
-from enum import Enum
+from typing import List
 
-from dotenv import dotenv_values
-import openai
-
-from langchain import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
-from langchain.document_loaders.parsers import LanguageParser
-from langchain.document_loaders.generic import GenericLoader
-from langchain.document_loaders import TextLoader
-from langchain.docstore.document import Document
-from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
@@ -24,7 +12,6 @@ from refactor.prompts import (
     REFACTOR_PROMPT,
     REFACTOR_TEMPLATE,
     SUMMARIZE_PROMPT,
-    SUMMARIZE_TEMPLATE,
 )
 from utilities.token_helper import simple_get_tokens_for_message
 from utilities.open_ai import get_openai_api_key
