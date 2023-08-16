@@ -4,6 +4,7 @@ from typing import List
 
 from review.code_reviewer import CodeReviewer
 from refactor.code_refactor import CodeRefactor
+from document.document_code import DocumentCode
 from code_reviewer_configuration import CodeReviewerConfiguration
 from code_reviewer_configuration import PROVIDERS
 
@@ -44,7 +45,7 @@ class ReviewRunner:
         refactored_code_documents = code_refactor.refactor(source_code_files)
 
         # Get the provider from the configuration and perform provider-specific operations
-        provider = PROVIDERS[self.configuration.provider.lower()]
+        provider = PROVIDERS[self.configuration.provider.lower()]()
         provider.commit_changes(
             source_branch=source_branch,
             target_branch=target_branch,
@@ -54,7 +55,25 @@ class ReviewRunner:
 
     def do_code_documentation(self):
         # Documentation functionality to be implemented
-        pass
+        source_code_files = self.get_source_code_files()
+
+        if len(source_code_files) == 0:
+            raise ValueError("No source code files found")
+        
+        # Code documentation requires a template or input file to be specified
+        if self.document_template is None:
+            raise ValueError("No document template specified")
+        
+        if self.document_output is None:
+            raise ValueError("No document output specified")
+        
+        code_documenter = DocumentCode(self.configuration)
+
+        documentation = code_documenter.document(source_code_files, self.document_template, self.update_existing_documentation)
+
+        # Write the documentation to the output file
+        with open(self.document_output, "w") as f:
+            f.write(documentation)
 
     def do_code_review(self):
         # Get the source code files
@@ -63,13 +82,12 @@ class ReviewRunner:
         if len(source_code_files) == 0:
             raise ValueError("No source code files found")
 
-
         # Initialize the CodeReviewer class and run the review
         code_reviewer = CodeReviewer(self.configuration)
         review = code_reviewer.review(source_code_files)
 
         # Get the provider from the configuration and add the review comments to the PR
-        provider = PROVIDERS[self.configuration.provider.lower()]
+        provider = PROVIDERS[self.configuration.provider.lower()]()
         provider.add_pr_comments(review)
 
     def get_source_code_files(self) -> List[str]:
@@ -81,15 +99,27 @@ class ReviewRunner:
 
         logging.debug("Code Refactor Paths: " + str(paths))
 
-        # Check if each path is a file and add it to the source code files list
-        source_code_files = [path for path in paths if os.path.isfile(path)]
-        source_code_directories = [path for path in paths if os.path.isdir(path)]
-        
-        # If a directory is specified, add all files in the directory to the source code files list
-        for directory in source_code_directories:
-            for root, dirs, files in os.walk(directory):
-                for file in files:
-                    source_code_files.append(os.path.join(root, file))
+        # Function to recursively get all files within a directory, excluding hidden and specified directories
+        def get_files_recursively(directory):
+            files = []
+            for root, dirs, filenames in os.walk(directory):
+                # Exclude hidden directories
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
+                # Exclude specified directories
+                dirs[:] = [d for d in dirs if d not in self.exclude_directories]
+                for filename in filenames:
+                    files.append(os.path.join(root, filename))
+            return files
+
+        source_code_files = []
+
+        for path in paths:
+            if os.path.isfile(path):
+                source_code_files.append(path)
+            elif os.path.isdir(path):
+                source_code_files.extend(get_files_recursively(path))
+            else:
+                logging.warning(f"Invalid path: {path}")
 
         logging.debug("Source code files: " + str(source_code_files))
 
@@ -103,11 +133,25 @@ class ReviewRunner:
         self.source_branch = os.getenv("CR_SOURCE_BRANCH", "main")
         self.target_branch = os.getenv("CR_TARGET_BRANCH", "test-branch")
         self.cr_type = os.getenv("CR_TYPE", None)
-        self.target_files = os.getenv("CR_TARGET_FILES", "")
+        self.target_files = os.getenv("CR_TARGET_FILES", None)
+        
+        # Documentation arguments
+        self.update_existing_documentation = os.getenv("CR_UPDATE_EXISTING_DOCUMENTATION", "false").lower() == "true"
+        self.document_template = os.getenv("CR_DOCUMENT_TEMPLATE", None)
+        self.document_output = os.getenv("CR_DOCUMENT_OUTPUT", None)
+
+        # Get any directories to exclude from the target files
+        self.exclude_directories = os.getenv("CR_EXCLUDE_DIRECTORIES", None)
 
         # Split the target files string into a list
-        self.target_files = self.target_files.split(",")
-        logging.debug("Target files: " + str(self.target_files))
+        if self.target_files is not None:
+            self.target_files = self.target_files.split(",")
+            logging.debug("Target files: " + str(self.target_files))
+
+        # Split the target files string into a list
+        if self.exclude_directories is not None:
+            self.exclude_directories = self.exclude_directories.split(",")
+            logging.debug("Excluded directories: " + str(self.exclude_directories))
 
         # Validate that the type argument is one of the valid choices
         if self.cr_type.lower() not in VALID_TYPES:

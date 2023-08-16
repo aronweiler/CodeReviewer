@@ -33,9 +33,15 @@ class CodeRefactor:
             self.llm_arguments_configuration.max_supported_tokens
             - self.llm_arguments_configuration.max_completion_tokens
             - simple_get_tokens_for_message(REFACTOR_TEMPLATE)
-        )
+        )        
 
-        logging.debug(f"Remaining prompt tokens: {self.remaining_prompt_tokens}")
+        logging.info(f"Remaining prompt tokens: {self.remaining_prompt_tokens}")
+
+        # If the remaining prompt tokens are lower than this arbitrary number, throw a warning 
+        if self.remaining_prompt_tokens < 500:
+            logging.warning(
+                f"Remaining prompt tokens are low ({self.remaining_prompt_tokens}).  This may cause issues with the refactoring process."
+            )
 
         # Initialize language model
         self.llm = ChatOpenAI(
