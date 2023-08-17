@@ -15,7 +15,7 @@ stages:
   - run_docker
 
 run_docker:
-  stage: run_codereviewer
+  stage: run_docker
   script:
     - echo "Running CodeReviewer"
     - echo $CI_REPOSITORY_URL | sed -e 's/\.git$//'
