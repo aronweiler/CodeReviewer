@@ -46,6 +46,11 @@ class GitLabIntegration(SourceControlBase):
         for metadata in metadatas:
             path = metadata["file_path"]
             code = metadata["code"]
+            
+            if os.path.exists(path):
+                action = "update"
+            else:
+                action = "create"
 
             project = self.gl.projects.get(project_id)
             # See https://docs.gitlab.com/ce/api/commits.html#create-a-commit-with-multiple-files-and-actions
@@ -56,7 +61,7 @@ class GitLabIntegration(SourceControlBase):
                 'commit_message': commit_message,
                 'actions': [
                     {
-                        'action': 'create',                    
+                        'action': action,                    
                         'file_path': path,
                         'content': code,
                     }
