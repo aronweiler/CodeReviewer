@@ -61,7 +61,7 @@ run_docker:
   #     -e CR_TYPE=$CR_TYPE
   #     -e CR_TARGET_FILES=$CR_TARGET_FILES
   #     case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
-  when: manual
+
   
 
 
