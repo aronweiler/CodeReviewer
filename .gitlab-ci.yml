@@ -31,7 +31,7 @@ run_docker:
       -e CR_LOG_LEVEL=debug
       -e CR_SOURCE_BRANCH=$CI_COMMIT_REF_NAME
       -e CR_TARGET_BRANCH=$CR_TARGET_BRANCH
-      -e CR_TYPE=refactor
+      -e CR_TYPE=$CR_TYPE
       -e CR_TARGET_FILES=$CR_TARGET_FILES
       case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
   when: manual
