@@ -2,6 +2,7 @@
 
 variables:
   CR_PROVIDER: "gitlab"
+  GITLAB_PROJECT_ID: $CI_PROJECT_ID
   CR_MODEL: 
     value: "gpt-3.5-turbo-0613"
     description: "The model to use"
