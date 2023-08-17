@@ -64,5 +64,16 @@ class GitLabIntegration(SourceControlBase):
             }
 
             commit = project.commits.create(data)
+            
+            print(commit)
     
-        
+if __name__ == "__main__":
+    
+    gl = GitLabIntegration()
+    
+    os.environ.setdefault("GITLAB_PROJECT_ID", "14106")
+    
+    gl.commit_changes("gitlab-integration", "delete_me", "hey, it's a meeee... ", [{"file_path": "/test/blah.txt", "code": "Only a test"}])
+    
+    
+    

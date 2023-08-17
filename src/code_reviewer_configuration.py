@@ -4,13 +4,14 @@ import logging
 import json
 from typing import Union, Dict
 from integrations.github_integration import GitHubIntegration
+from integrations.gitlab_integration import GitLabIntegration
 from integrations.file_integration import FileIntegration
 from integrations.source_control_base import SourceControlBase
 
 # Define the providers dictionary globally
 PROVIDERS: Union[Dict[str, SourceControlBase], None] = {
     "github": GitHubIntegration,
-    "gitlab": None,
+    "gitlab": GitLabIntegration,
     "bitbucket": None,
     "file": FileIntegration,
 }
