@@ -41,31 +41,5 @@ run_docker:
     entrypoint: [""]
   script:
     - python3 -u /src/app.py
-  # script:
-  #   - echo "Running CodeReviewer"
-  #   - > 
-  #     docker run 
-  #     --rm 
-  #     -e GITLAB_PROJECT_ID=$CI_PROJECT_ID 
-  #     -e GITLAB_URL=https://code.medtronic.com
-  #     -e CR_PROVIDER=gitlab
-  #     -e CR_MODEL=$CR_MODEL
-  #     -e CR_TEMPERATURE=$CR_TEMPERATURE
-  #     -e CR_MAX_SUPPORTED_TOKENS=$CR_MAX_SUPPORTED_TOKENS
-  #     -e CR_MAX_COMPLETION_TOKENS=$CR_MAX_COMPLETION_TOKENS
-  #     -e CR_LOG_LEVEL=debug
-  #     -e CR_SOURCE_BRANCH=$CI_COMMIT_REF_NAME
-  #     -e CR_TARGET_BRANCH=$CR_TARGET_BRANCH
-  #     -e CR_TYPE=$CR_TYPE
-  #     -e CR_TARGET_FILES=$CR_TARGET_FILES
-  #     case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
-
-
-  
-
-
-# run_python:
-#   stage: run_python
-#   script:
-#     - echo "Running CodeReviewer Python script..."
-#     - python app.py
+  tags:
+    - weilea2-laptop
