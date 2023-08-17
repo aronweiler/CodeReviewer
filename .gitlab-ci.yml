@@ -25,11 +25,8 @@ variables:
   CR_TARGET_BRANCH:
     description: "The branch where any changes will be committed"
   CR_TYPE: 
-    description: "The type of action to perform"
-    options:
-      - "review"
-      - "refactor"
-      - "document"
+    value: "review"
+    description: "The type of action to perform"    
   CR_TARGET_FILES: 
     description: "Optional: List of comma separated values containing target files.  If empty, the entire repo will be used."
 
