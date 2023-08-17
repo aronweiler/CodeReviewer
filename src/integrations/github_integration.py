@@ -40,9 +40,9 @@ class GitHubIntegration(SourceControlBase):
 
         # Create a new tree with the changes
         tree_elements = []
-        for doc in metadatas:
-            path = doc["file_path"]
-            code = doc["refactored_code"]
+        for metadata in metadatas:
+            path = metadata["file_path"]
+            code = metadata["code"]
             # Does the encoding need to match the source?  Probably should find out and adjust this if necessary.
             blob = repo.create_git_blob(content=code, encoding="utf-8")
             git_tree_element = InputGitTreeElement(
@@ -139,7 +139,7 @@ if __name__ == "__main__":
         code_documents=[
             {
                 "file_path": "examples/code_comment.py",
-                "refactored_code": "def test():\n    print('hello world')\n",
+                "code": "def test():\n    print('hello world')\n",
             }
         ],
     )

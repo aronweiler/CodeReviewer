@@ -97,12 +97,12 @@ class CodeRefactor:
 
             if last_file_path != current_file_path:
                 # If it's not the last file name, add new metadata to the list
-                metadata_list.append({"file_path": current_file_path, "refactored_code": refactored_code})
+                metadata_list.append({"file_path": current_file_path, "code": refactored_code})
                 # Then update the last file path
                 last_file_path = current_file_path
             else:
                 # If it is the last file name, append the refactored code to the last metadata in the list
-                metadata_list[-1]["refactored_code"] += "\n" + refactored_code
+                metadata_list[-1]["code"] += "\n" + refactored_code
 
         #new_metadata_list = self.get_combined_metadata(metadata_list)
         
@@ -112,7 +112,7 @@ class CodeRefactor:
         combined_data = {}
         for item in metadata_list:
             file_path = item["file_path"]
-            refactored_code = item["refactored_code"]
+            refactored_code = item["code"]
             combined_data.setdefault(file_path, []).append(refactored_code)
 
         unique_result_list = []
