@@ -38,7 +38,11 @@ stages:
 
 run_docker:
   stage: run_docker
-  image: case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest
+  image: 
+    name: case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
+    entrypoint: [""]
+  script:
+    - python3 -u /src/app.py
   # script:
   #   - echo "Running CodeReviewer"
   #   - > 
