@@ -18,12 +18,11 @@ run_docker:
   stage: run_docker
   script:
     - echo "Running CodeReviewer"
-    - echo $CI_REPOSITORY_URL | sed -e 's/\.git$//'
     - > 
       docker run 
       --rm 
       -e GITLAB_PROJECT_ID=$CI_PROJECT_ID 
-      -e GITLAB_URL=$(echo $CI_REPOSITORY_URL | sed -e 's/\.git$//')
+      -e GITLAB_URL=https://code.medtronic.com
       -e CR_PROVIDER=gitlab
       -e CR_MODEL=$CR_MODEL
       -e CR_TEMPERATURE=$CR_TEMPERATURE
