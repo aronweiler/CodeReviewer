@@ -5,3 +5,4 @@ chromadb
 tiktoken
 argparse
 PyGithub
+python-gitlab
