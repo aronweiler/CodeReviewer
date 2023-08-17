@@ -19,10 +19,10 @@ variables:
     value: "new-branch"
     description: "The branch where any changes will be committed"
   CR_TYPE: 
-    value: "review"
+    value: "refactor"
     description: "The type of action to perform"    
   CR_TARGET_FILES: 
-    value: ""
+    value: "examples/code_comment.py"
     description: "Optional: List of comma separated values containing target files.  If empty, the entire repo will be used."
 
 
