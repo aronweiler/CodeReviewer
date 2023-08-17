@@ -1,54 +1,54 @@
 
 
 # Uncomment to build docker image
-variables:
-  AF_IMAGE_BASE_PATH: "case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer"
+# variables:
+#   AF_IMAGE_BASE_PATH: "case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer"
 
   
-include:
-  - file: gitlab-ci/pipeline/docker-linux-build-tag-push-with-corp-shared-runner.gitlab-ci.yml
-    project: Ventilation/devops/cicd-templates
-    ref: main
+# include:
+#   - file: gitlab-ci/pipeline/docker-linux-build-tag-push-with-corp-shared-runner.gitlab-ci.yml
+#     project: Ventilation/devops/cicd-templates
+#     ref: main
 
-## Uncomment to run
-# stages:
-#   - run_docker
+# Uncomment to run
+stages:
+  - run_docker
 
-# run_docker:
-#   stage: run_codereviewer
+run_docker:
+  stage: run_codereviewer
+  script:
+    - echo "Running CodeReviewer"
+    - echo $CI_REPOSITORY_URL | sed -e 's/\.git$//'
+    - > 
+      docker run 
+      --rm 
+      -e GITLAB_PROJECT_ID=$CI_PROJECT_ID 
+      -e GITLAB_URL=$(echo $CI_REPOSITORY_URL | sed -e 's/\.git$//')
+      -e CR_PROVIDER=gitlab
+      -e CR_MODEL=$CR_MODEL
+      -e CR_TEMPERATURE=$CR_TEMPERATURE
+      -e CR_MAX_SUPPORTED_TOKENS=$CR_MAX_SUPPORTED_TOKENS
+      -e CR_MAX_COMPLETION_TOKENS=$CR_MAX_COMPLETION_TOKENS
+      -e CR_LOG_LEVEL=debug
+      -e CR_SOURCE_BRANCH=$CI_COMMIT_REF_NAME
+      -e CR_TARGET_BRANCH=$CR_TARGET_BRANCH
+      -e CR_TYPE=refactor
+      -e CR_TARGET_FILES=$CR_TARGET_FILES
+      case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
+  when: manual
+  variables:
+    CR_MODEL: ${CR_MODEL:-gpt-3.5-turbo-0613}
+    CR_TEMPERATURE: ${CR_TEMPERATURE:-0.0}
+    CR_MAX_SUPPORTED_TOKENS: ${CR_MAX_SUPPORTED_TOKENS:-4096}
+    CR_MAX_COMPLETION_TOKENS: ${CR_MAX_COMPLETION_TOKENS:-2048}
+    CR_TARGET_BRANCH: $CR_TARGET_BRANCH
+    CR_TYPE: $CR_TYPE
+    CR_TARGET_FILES: ${CR_TARGET_FILES:""}
+
+
+
+# run_python:
+#   stage: run_python
 #   script:
-#     - echo "Running CodeReviewer"
-#     - echo $CI_REPOSITORY_URL | sed -e 's/\.git$//'
-#     - > 
-#       docker run 
-#       --rm 
-#       -e GITLAB_PROJECT_ID=$CI_PROJECT_ID 
-#       -e GITLAB_URL=$(echo $CI_REPOSITORY_URL | sed -e 's/\.git$//')
-#       -e CR_PROVIDER=gitlab
-#       -e CR_MODEL=$CR_MODEL
-#       -e CR_TEMPERATURE=$CR_TEMPERATURE
-#       -e CR_MAX_SUPPORTED_TOKENS=$CR_MAX_SUPPORTED_TOKENS
-#       -e CR_MAX_COMPLETION_TOKENS=$CR_MAX_COMPLETION_TOKENS
-#       -e CR_LOG_LEVEL=debug
-#       -e CR_SOURCE_BRANCH=$CI_COMMIT_REF_NAME
-#       -e CR_TARGET_BRANCH=$CR_TARGET_BRANCH
-#       -e CR_TYPE=refactor
-#       -e CR_TARGET_FILES=$CR_TARGET_FILES
-#       aronweiler/github-actions 
-#   when: manual
-#   variables:
-#     CR_MODEL: ${CR_MODEL:-gpt-3.5-turbo-0613}
-#     CR_TEMPERATURE: ${CR_TEMPERATURE:-0.0}
-#     CR_MAX_SUPPORTED_TOKENS: ${CR_MAX_SUPPORTED_TOKENS:-4096}
-#     CR_MAX_COMPLETION_TOKENS: ${CR_MAX_COMPLETION_TOKENS:-2048}
-#     CR_TARGET_BRANCH: $CR_TARGET_BRANCH
-#     CR_TYPE: $CR_TYPE
-#     CR_TARGET_FILES: ${CR_TARGET_FILES:""}
-
-
-
-# # run_python:
-# #   stage: run_python
-# #   script:
-# #     - echo "Running CodeReviewer Python script..."
-# #     - python app.py
+#     - echo "Running CodeReviewer Python script..."
+#     - python app.py
