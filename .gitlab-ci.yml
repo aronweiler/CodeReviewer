@@ -1,14 +1,5 @@
+---
 
-
-# Uncomment to build docker image
-# variables:
-#   AF_IMAGE_BASE_PATH: "case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer"
-
-  
-# include:
-#   - file: gitlab-ci/pipeline/docker-linux-build-tag-push-with-corp-shared-runner.gitlab-ci.yml
-#     project: Ventilation/devops/cicd-templates
-#     ref: main
 variables:
   CR_MODEL: 
     value: "gpt-3.5-turbo-0613"
@@ -23,14 +14,21 @@ variables:
     value: "2048"
     description: 'The maximum supported completion tokens'
   CR_TARGET_BRANCH:
+    value: "new-branch"
     description: "The branch where any changes will be committed"
   CR_TYPE: 
     value: "review"
     description: "The type of action to perform"    
   CR_TARGET_FILES: 
+    value: ""
     description: "Optional: List of comma separated values containing target files.  If empty, the entire repo will be used."
 
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - when: always
 
 # Uncomment to run
 stages:
@@ -61,6 +59,7 @@ run_docker:
   #     -e CR_TYPE=$CR_TYPE
   #     -e CR_TARGET_FILES=$CR_TARGET_FILES
   #     case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
+
 
   
 
