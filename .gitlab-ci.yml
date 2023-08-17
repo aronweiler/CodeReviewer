@@ -2,7 +2,6 @@
 
 variables:
   CR_PROVIDER: "gitlab"
-  GITLAB_PROJECT_ID: $CI_PROJECT_ID
   CR_MODEL: 
     value: "gpt-3.5-turbo-0613"
     description: "The model to use"
@@ -15,6 +14,7 @@ variables:
   CR_MAX_COMPLETION_TOKENS: 
     value: "2048"
     description: 'The maximum supported completion tokens'
+  CR_SOURCE_BRANCH: $CI_COMMIT_REF_NAME
   CR_TARGET_BRANCH:
     value: "new-branch"
     description: "The branch where any changes will be committed"

@@ -36,12 +36,57 @@ class GitLabIntegration(SourceControlBase):
 
 
     def add_pr_comments(self, comments: List[CodeComment]):
-        raise NotImplementedError("GitLabIntegration.add_pr_comments is not implemented")
+        """Adds comments to the target PR/MR
+
+        Args:
+            comments (List[CodeComment]): list of code comments to add
+        """
+        project_id = os.getenv("CI_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CI_PROJECT_ID is not set in the environment")
+        
+        merge_request_id = os.getenv("CI_MERGE_REQUEST_ID")
+        if not merge_request_id:
+            raise ValueError("CI_MERGE_REQUEST_ID is not set in the environment")
+        
+        project = self.gl.projects.get(project_id)
+        merge_request = project.mergerequests.get(merge_request_id)
+    
+    def add_commit_comments(self, comments: List[CodeComment]):
+        """Adds comments to the latest commit on the CR_SOURCE_BRANCH.  Note: This does not add multi-line comments, and does not work on anything that isn't within the diff (lame).
+
+        Args:
+            comments (List[CodeComment]): list of code comments to add
+        """
+        project_id = os.getenv("CI_PROJECT_ID")
+        if not project_id:
+            raise ValueError("CI_PROJECT_ID is not set in the environment")
+        
+        source_branch = os.getenv("CR_SOURCE_BRANCH")
+        if not source_branch:
+            raise ValueError("CR_SOURCE_BRANCH is not set in the environment")
+        
+        project = self.gl.projects.get(project_id)
+        
+        branch = project.branches.get(source_branch)
+        
+        latest_commit = branch.commit
+        
+        commit = project.commits.get(latest_commit['short_id'])
+        
+        for comment in comments:
+            
+            commit.comments.create({'note': comment.comment,
+                'line': comment.start,
+                'line_type': 'new',
+                'path': comment.file_path})
 
     def commit_changes(self, source_branch, target_branch, commit_message, metadatas: List[dict]):
-        project_id = os.getenv("GITLAB_PROJECT_ID")
+        project_id = os.getenv("CI_PROJECT_ID")
         if not project_id:
-            raise ValueError("GITLAB_PROJECT_ID is not set in the environment")
+            raise ValueError("CI_PROJECT_ID is not set in the environment")
+        
+        project = self.gl.projects.get(project_id)
         
         for metadata in metadatas:
             path = metadata["file_path"]
@@ -51,8 +96,7 @@ class GitLabIntegration(SourceControlBase):
                 action = "update"
             else:
                 action = "create"
-
-            project = self.gl.projects.get(project_id)
+            
             # See https://docs.gitlab.com/ce/api/commits.html#create-a-commit-with-multiple-files-and-actions
             # for actions detail
             data = {
@@ -76,9 +120,17 @@ if __name__ == "__main__":
     
     gl = GitLabIntegration()
     
-    os.environ.setdefault("GITLAB_PROJECT_ID", "14106")
+    os.environ.setdefault("CI_PROJECT_ID", "14106")
+    os.environ.setdefault("CR_SOURCE_BRANCH", "gitlab-comments")
+    os.environ.setdefault("CI_MERGE_REQUEST_ID", "gitlab-comments")
     
-    gl.commit_changes("gitlab-integration", "delete_me", "hey, it's a meeee... ", [{"file_path": "/test/blah.txt", "code": "Only a test"}])
+    #gl.commit_changes("gitlab-integration", "delete_me", "hey, it's a meeee... ", [{"file_path": "/test/blah.txt", "code": "Only a test"}])
+    
+    comments = []
+    
+    comments.append(CodeComment("Total garbage, as usual", 50, 53, "src/integrations/gitlab_integration.py"))
+    
+    gl.add_commit_comments(comments=comments)
     
     
     

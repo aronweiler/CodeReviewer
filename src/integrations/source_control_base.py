@@ -6,10 +6,11 @@ class SourceControlBase(ABC):
     @abstractmethod
     def add_pr_comments(self, comments: List[CodeComment]):
         pass
+    
+    @abstractmethod
+    def add_commit_comments(self, comments: List[CodeComment]):
+        pass
 
     @abstractmethod
     def commit_changes(self, source_branch, target_branch, commit_message, metadatas: List[dict]):
         pass
-
-
-    
