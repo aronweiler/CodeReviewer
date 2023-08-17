@@ -1,4 +1,5 @@
 """VectorStore wrapper around a Postgres/PGVector database."""
+# Testing a comment here
 from __future__ import annotations
 
 import enum
@@ -269,7 +270,7 @@ class PGVector(VectorStore):
         return self.add_embeddings(
             texts=texts, embeddings=embeddings, metadatas=metadatas, ids=ids, **kwargs
         )
-
+# And something here
     def similarity_search(
         self,
         query: str,
@@ -609,3 +610,5 @@ class PGVector(VectorStore):
                 f" for distance_strategy of {self._distance_strategy}."
                 "Consider providing relevance_score_fn to PGVector constructor."
             )
+            
+            # Adding a comment here
