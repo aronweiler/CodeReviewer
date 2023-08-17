@@ -1,20 +1,8 @@
-import json
 import logging
-from datetime import datetime
-from typing import Union, List, Dict
-from enum import Enum
+from typing import List
 
-from dotenv import dotenv_values
-import openai
-
-from langchain import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.text_splitter import RecursiveCharacterTextSplitter, Language
-from langchain.document_loaders.parsers import LanguageParser
-from langchain.document_loaders.generic import GenericLoader
-from langchain.document_loaders import TextLoader
-from langchain.docstore.document import Document
-from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
@@ -24,7 +12,6 @@ from refactor.prompts import (
     REFACTOR_PROMPT,
     REFACTOR_TEMPLATE,
     SUMMARIZE_PROMPT,
-    SUMMARIZE_TEMPLATE,
 )
 from utilities.token_helper import simple_get_tokens_for_message
 from utilities.open_ai import get_openai_api_key
@@ -46,9 +33,15 @@ class CodeRefactor:
             self.llm_arguments_configuration.max_supported_tokens
             - self.llm_arguments_configuration.max_completion_tokens
             - simple_get_tokens_for_message(REFACTOR_TEMPLATE)
-        )
+        )        
 
-        logging.debug(f"Remaining prompt tokens: {self.remaining_prompt_tokens}")
+        logging.info(f"Remaining prompt tokens: {self.remaining_prompt_tokens}")
+
+        # If the remaining prompt tokens are lower than this arbitrary number, throw a warning 
+        if self.remaining_prompt_tokens < 500:
+            logging.warning(
+                f"Remaining prompt tokens are low ({self.remaining_prompt_tokens}).  This may cause issues with the refactoring process."
+            )
 
         # Initialize language model
         self.llm = ChatOpenAI(

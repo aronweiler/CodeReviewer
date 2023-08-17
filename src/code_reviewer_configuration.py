@@ -9,10 +9,10 @@ from integrations.source_control_base import SourceControlBase
 
 # Define the providers dictionary globally
 PROVIDERS: Union[Dict[str, SourceControlBase], None] = {
-    "github": GitHubIntegration(),
+    "github": GitHubIntegration,
     "gitlab": None,
     "bitbucket": None,
-    "file": FileIntegration(),
+    "file": FileIntegration,
 }
 
 
