@@ -16,18 +16,18 @@ variables:
     description: "The maximum supported completion tokens"
   CR_SOURCE_BRANCH: $CI_COMMIT_REF_NAME
   CR_TARGET_BRANCH:
-    value: "new-branch"
+    value: "new-branch"    
     description: "The branch where any changes will be committed. This is ignored when the action is a merge request."    
   CR_TARGET_FILES: 
     value: "examples/code_comment.py"
     description: "Optional: List of comma separated values containing target files.  If empty, the entire repo will be used."
 
 
-# workflow:
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "push"
-#       when: never
-#     - when: always
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "manual"
+      when: never
+
 
 # Uncomment to run
 stages:
