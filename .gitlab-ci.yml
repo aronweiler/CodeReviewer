@@ -7,41 +7,69 @@ variables:
     description: "The model to use"
   CR_TEMPERATURE: 
     value: "0.0"
-    description: "The temperature"
+    description: "The temperature of the model"
   CR_MAX_SUPPORTED_TOKENS: 
     value: "4096"
-    description: 'The maximum supported tokens'
+    description: "The maximum supported tokens"
   CR_MAX_COMPLETION_TOKENS: 
     value: "2048"
-    description: 'The maximum supported completion tokens'
+    description: "The maximum supported completion tokens"
   CR_SOURCE_BRANCH: $CI_COMMIT_REF_NAME
   CR_TARGET_BRANCH:
     value: "new-branch"
-    description: "The branch where any changes will be committed"
-  CR_TYPE: 
-    value: "refactor"
-    description: "The type of action to perform"    
+    description: "The branch where any changes will be committed. This is ignored when the action is a merge request."    
   CR_TARGET_FILES: 
     value: "examples/code_comment.py"
     description: "Optional: List of comma separated values containing target files.  If empty, the entire repo will be used."
 
 
-workflow:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: never
-    - when: always
+# workflow:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "push"
+#       when: never
+#     - when: always
 
 # Uncomment to run
 stages:
-  - run_docker
+  - refactor
+  - review
+  - document
 
-run_docker:
-  stage: run_docker
+refactor:
+  stage: refactor
   image: 
     name: case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
     entrypoint: [""]
   script:
     - python3 -u /src/app.py
+  variables:
+    CR_TYPE: "refactor"
   tags:
     - weilea2-laptop
+  when: manual
+
+review:
+  stage: review
+  image: 
+    name: case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
+    entrypoint: [""]
+  script:
+    - python3 -u /src/app.py
+  variables:
+    CR_TYPE: "review"
+  tags:
+    - weilea2-laptop
+  when: manual
+
+document:
+  stage: document
+  image: 
+    name: case.artifacts.medtronic.com/ventilation-docker-dev-local/prototypes/code-reviewer:latest 
+    entrypoint: [""]
+  script:
+    - python3 -u /src/app.py
+  variables:
+    CR_TYPE: "document"
+  tags:
+    - weilea2-laptop
+  when: manual

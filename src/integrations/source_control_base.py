@@ -4,6 +4,10 @@ from review.code_comment import CodeComment
 
 class SourceControlBase(ABC):
     @abstractmethod
+    def get_pr_diffs(self):
+        pass
+    
+    @abstractmethod
     def add_pr_comments(self, comments: List[CodeComment]):
         pass
     
