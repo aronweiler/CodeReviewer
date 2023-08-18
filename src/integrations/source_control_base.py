@@ -1,10 +1,11 @@
 from typing import List
 from abc import ABC, abstractmethod
 from review.code_comment import CodeComment
+from integrations.diff import Diff
 
 class SourceControlBase(ABC):
     @abstractmethod
-    def get_pr_diffs(self):
+    def get_pr_diffs(self) -> List[Diff]:
         pass
     
     @abstractmethod

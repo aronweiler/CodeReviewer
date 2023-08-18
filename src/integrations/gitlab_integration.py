@@ -9,6 +9,7 @@ import gitlab
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 
 from integrations.source_control_base import SourceControlBase, CodeComment
+from integrations.diff import Diff
 
 class GitLabIntegration(SourceControlBase):
     def __init__(self):
@@ -34,7 +35,7 @@ class GitLabIntegration(SourceControlBase):
         # information to be printed to the terminal.
         #self.gl.enable_debug()
 
-    def get_pr_diffs(self):
+    def get_pr_diffs(self) -> List[Diff]:
         project_id = os.getenv("CI_PROJECT_ID")
         if not project_id:
             raise ValueError("CI_PROJECT_ID is not set in the environment")
@@ -47,27 +48,29 @@ class GitLabIntegration(SourceControlBase):
         merge_request = project.mergerequests.get(merge_request_id)
 
         # file names here for convinience wrt the comments
-        file_names = []
+        # file_names = []
         diffs = []
         for diff in merge_request.diffs.list():
             diff_obj = merge_request.diffs.get(diff.id)
             
             for d in diff_obj.diffs:            
-                path = d.get("new_path")                
+                new_path = d.get("new_path")
+                old_path = d.get("old_path")
                 diff_content = d.get("diff")
                 
-                file_names.append(path)
-                diffs.append({"path": path, "diff": diff_content})
+                # file_names.append(path)
+                
+                diffs.append(Diff(old_path, new_path, diff_content, d.get("new_file"), d.get("renamed_file"), d.get("deleted_file")))
         
         # Get any existing comments on the MR    
         # TODO: Need to find a way to link this to the diff stuff and then re-examine comments that were previously made
-        comments = []
-        for discussion in merge_request.discussions.list():
-            for note in discussion.attributes['notes']:
-                if note['type'] == "DiffNote":
-                    # If the note pertains to something in the diffs we collected, put it in the list
-                    if note['position']['new_path'] in file_names or note['position']['old_path'] in file_names:
-                        comments.append(note)
+        # comments = []
+        # for discussion in merge_request.discussions.list():
+        #     for note in discussion.attributes['notes']:
+        #         if note['type'] == "DiffNote":
+        #             # If the note pertains to something in the diffs we collected, put it in the list
+        #             if note['position']['new_path'] in file_names or note['position']['old_path'] in file_names:
+        #                 comments.append(note)
         
         return diffs
         

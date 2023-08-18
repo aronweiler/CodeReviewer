@@ -3,12 +3,14 @@ import logging
 from typing import List
 
 from review.code_reviewer import CodeReviewer
+from review.diff_reviewer import DiffReviewer
 from refactor.code_refactor import CodeRefactor
 from document.document_code import DocumentCode
 from code_reviewer_configuration import CodeReviewerConfiguration
+from integrations.source_control_base import SourceControlBase
 from code_reviewer_configuration import PROVIDERS
 
-VALID_TYPES = ["review", "refactor", "document"]
+VALID_TYPES = ["diff-review", "review", "refactor", "document"]
 
 
 class ReviewRunner:
@@ -22,6 +24,8 @@ class ReviewRunner:
         operation_type = self.cr_type.lower()
         if operation_type == "review":
             self.do_code_review()
+        elif operation_type == "diff-review":
+            self.do_diff_review()
         elif operation_type == "refactor":
             self.do_code_refactor()
         elif operation_type == "document":
@@ -76,6 +80,9 @@ class ReviewRunner:
             f.write(documentation)
 
     def do_code_review(self):
+        # TODO: This needs to be refactored so that it creates a list of comments and then puts them... somewhere.
+        # The diff-review is replacing this one for automatic running with source control integration
+        
         # Get the source code files
         source_code_files = self.get_source_code_files()
 
@@ -88,6 +95,26 @@ class ReviewRunner:
 
         # Get the provider from the configuration and add the review comments to the PR
         provider = PROVIDERS[self.configuration.provider.lower()]()
+        provider.add_pr_comments(review)
+        
+    def do_diff_review(self):        
+        # Get the provider from the configuration and add the review comments to the PR
+        provider:SourceControlBase = PROVIDERS[self.configuration.provider.lower()]()
+        
+        # Get the diffs
+        # TODO: Add capability to do reviews on commit diffs as well as PR/MR diffs 
+        diffs = provider.get_pr_diffs()
+
+        if len(diffs) == 0:
+            raise ValueError("No diffs found")
+        
+        # These will be put into a vector store for the LLM to use
+        files_to_include_as_context = self.get_source_code_files()
+
+        # Initialize the CodeReviewer class and run the review
+        diff_reviewer = DiffReviewer(self.configuration)
+        review = diff_reviewer.review(diffs, files_to_include_as_context)
+        
         provider.add_pr_comments(review)
 
     def get_source_code_files(self) -> List[str]:

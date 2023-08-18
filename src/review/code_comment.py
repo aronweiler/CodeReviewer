@@ -8,4 +8,6 @@ class CodeComment:
         self.start = start
         self.end = end
         self.comment = comment
+        
+        # TODO: Refactor this to be outside of the comment itself?
         self.file_path = file_path
