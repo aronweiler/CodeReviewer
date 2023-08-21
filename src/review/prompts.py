@@ -38,10 +38,14 @@ REVIEW_PROMPT = PromptTemplate(
     template=REVIEW_TEMPLATE,
 )
 
-DIFF_REVIEW_TEMPLATE = """You are a world-renowned expert in the practice of software engineering.  You are thourough, precise, and detail oriented. You have been tasked with reviewing another software engineers code changes, and identifying security vulnerabilities, performance bottlenecks, memory management concerns, and code correctness problems.
+DIFF_REVIEW_TEMPLATE = """You are a world-renowned expert in the practice of software engineering.  You are thourough, precise, and detail oriented. You have been tasked with reviewing another software engineers code changes, and identifying security vulnerabilities, performance bottlenecks, memory management concerns, and code correctness problems in the given diff.
 
-The diff below is a part of a larger code base, and while it may seem difficult to review it for the properties listed above within the limited context of the diff, please do your best.
+Here is some context related to this diff:
+----- BEGIN CONTEXT -----
+{context}
+----- END CONTEXT -----
 
+Here is the diff to review:
 ----- BEGIN DIFF -----
 {diff}
 ----- END DIFF -----
@@ -53,8 +57,7 @@ When commenting on the entire code, use the following format:
 {{"comment": <comment in markdown>}}
 
 
-Only provide comments on code that you find issue with.  Do not provide any comments on code that you do not find issue with.  
-If the context to judge a piece of code does not exist, such as when an unknown (not incorrect) method on an object is called, do not comment on it.
+Only provide comments on code that you find specific issues with.  If the context to judge a piece of code does not exist, such as when an unknown (not visibly incorrect) method on an object is called, do not comment on it.
 
 EXAMPLE OUTPUT:
 {{
@@ -71,8 +74,36 @@ Code review in JSON format:
 """
 
 DIFF_REVIEW_PROMPT = PromptTemplate(
-    input_variables=["diff"],
+    input_variables=["diff", "context"],
     template=DIFF_REVIEW_TEMPLATE,
+)
+
+CONTEXT_EXTRACTION_TEMPLATE = """You are part of a code reviewing team, and I need you to find and return a list of missing context items that I should pull into a review of the following diff.  This could include things like classes or functions that are not represented in this diff, or other relevant data.  You should ignore missing imports, usings, or other library-inclusions (i.e. Ignore the missing imports or usings of language specific libraries, such as System, os, typing, System.Collections, etc.) when they are not in the context of the diff.
+
+Your response should be a JSON formatted list of context to look up.  For example:
+
+@@ -0,0 +1,95 @@
++   myvar:List[str] = os.getenv("my_var").split(",")
++   my_items = get_data(myvar)
++   for item in my_items:
++      inputs = MyClass.DoWork(item)
++      someunion:Union[str,str] = item, VALID_RESPONSE['inputs'].go()
+
+
+{{"missing_context": "MyClass", "reference_type": "class", "reason": "`MyClass` is used, but not defined in the diff."}}
+{{"missing_context": "get_data()", "reference_type": "function", "reason": "The `get_data()` function is used to create `my_items` list, but I can't verify the usage of `my_items` without knowing how `get_data()` works."}}
+{{"missing_context": "VALID_RESPONSE", "reference_type": "variable", "reason": "`inputs` is used to select from `VALID_RESPONSE`, but `VALID_RESPONSE` is not defined in the diff."}}
+
+----- BEGIN DIFF -----
+{diff}
+----- END DIFF -----
+
+Missing context items in JSON format:
+"""
+
+CONTEXT_EXTRACTION_PROMPT = PromptTemplate(
+    input_variables=["diff"],
+    template=CONTEXT_EXTRACTION_TEMPLATE,
 )
 
 SUMMARIZE_TEMPLATE = """Summarize the functionality of the following {language} code. 
